@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bag and Delivery</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#A3214F}a:hover{color:#7A1739}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes slidein{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+.m-on .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both}
+.m-on .slidein{animation:slidein .6s cubic-bezier(.2,.8,.2,1) both}
+.d1{animation-delay:.08s!important}.d2{animation-delay:.16s!important}.d3{animation-delay:.24s!important}.d4{animation-delay:.32s!important}.d5{animation-delay:.4s!important}
+.tap{transition:transform .18s ease}
+.tap:active{transform:scale(.96)}
+input::placeholder{color:#8A7180}
+</style>
+</helmet>
+<div class="{{motionClass}}" style="width: 390px; height: 1000px; box-sizing: border-box; background: #FFF7F2; font-family: Manrope, system-ui, sans-serif; color: #2B1622; position: relative; overflow: hidden">
+  <div style="padding: 20px; display: flex; flex-direction: column; gap: 18px">
+    <div class="rise" style="display: flex; align-items: center; gap: 12px">
+      <a href="Main.dc.html" aria-label="Back" class="tap" style="width: 46px; height: 46px; border-radius: 23px; background: #FFFFFF; display: flex; align-items: center; justify-content: center; color: #2B1622">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg>
+      </a>
+      <div style="font-family: Marcellus, serif; font-size: 26px">Your bag</div>
+    </div>
+
+    <div class="rise d1" style="display: flex; flex-direction: column; gap: 10px">
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; color: #2E5E4E">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7z"></path></svg>Ships across India</div>
+      <div class="slidein d1" style="display: flex; gap: 12px; background: #FFFFFF; border-radius: 20px; padding: 12px; align-items: center">
+        <span style="width: 72px; height: 72px; border-radius: 14px; background: repeating-linear-gradient(90deg, #D9E7E0 0 8px, #C7DBD1 8px 16px); flex: none"></span>
+        <span style="display: flex; flex-direction: column; gap: 4px; flex: 1"><span style="font-weight: 700; font-size: 14px">Hand-woven cotton floor mat</span><span style="font-size: 12px; color: #6E5563">Sage · Qty 1</span><span style="font-weight: 700; color: {{accent}}">₹[PRICE]</span></span>
+      </div>
+      <div class="slidein d2" style="display: flex; gap: 12px; background: #FFFFFF; border-radius: 20px; padding: 12px; align-items: center">
+        <span style="width: 72px; height: 72px; border-radius: 14px; background: repeating-linear-gradient(45deg, #F6D7C3 0 8px, #F1C8B0 8px 16px); flex: none"></span>
+        <span style="display: flex; flex-direction: column; gap: 4px; flex: 1"><span style="font-weight: 700; font-size: 14px">Block-print cotton kurta</span><span style="font-size: 12px; color: #6E5563">Size M · Qty 1</span><span style="font-weight: 700; color: {{accent}}">₹[PRICE]</span></span>
+      </div>
+    </div>
+
+    <div class="rise d2" style="display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 14px; font-weight: 700">Deliver to</div>
+      <div style="display: flex; gap: 8px">
+        <label style="flex: 1; display: flex"><span style="position: absolute; left: -9999px">Pincode</span>
+          <input type="text" inputmode="numeric" placeholder="Pincode" value="{{pin}}" onChange="{{setPin}}" style="flex: 1; min-width: 0; height: 50px; border: none; border-radius: 16px; background: #FFFFFF; padding: 0 14px; font: inherit; font-size: 15px; color: #2B1622">
+        </label>
+        <button type="button" onClick="{{check}}" class="tap" style="height: 50px; padding: 0 18px; border: none; border-radius: 16px; background: #2B1622; color: #FFFFFF; font: inherit; font-weight: 700; cursor: pointer">Check</button>
+      </div>
+      <sc-if value="{{checked}}" hint-placeholder-val="{{ true }}">
+        <div class="rise" style="display: flex; flex-direction: column; gap: 6px; background: #FFFFFF; border-radius: 16px; padding: 14px; font-size: 13px; line-height: 1.45">
+          <div style="display: flex; gap: 8px"><span style="color: #2E5E4E; font-weight: 700">✓</span><span>Handcrafted items: delivered in [X–Y] days</span></div>
+          <div style="display: flex; gap: 8px"><span style="color: {{localColor}}; font-weight: 700">{{localMark}}</span><span>{{localText}}</span></div>
+        </div>
+      </sc-if>
+    </div>
+
+    <div class="rise d3" style="display: flex; flex-direction: column; gap: 10px">
+      <div style="font-size: 14px; font-weight: 700">Pay with</div>
+      <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{pays}}" as="p" hint-placeholder-count="3">
+          <button type="button" onClick="{{p.pick}}" class="tap" style="height: 50px; border-radius: 16px; border: 2px solid {{p.border}}; background: #FFFFFF; font: inherit; font-weight: 700; font-size: 14px; color: #2B1622; cursor: pointer">{{p.label}}</button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div class="rise d4" style="display: flex; flex-direction: column; gap: 8px; background: #FFFFFF; border-radius: 20px; padding: 16px; font-size: 14px">
+      <div style="display: flex; justify-content: space-between"><span style="color: #6E5563">Items</span><span>₹[SUBTOTAL]</span></div>
+      <div style="display: flex; justify-content: space-between"><span style="color: #6E5563">Delivery</span><span>₹[DELIVERY]</span></div>
+      <div style="height: 1px; background: #F1E6EA"></div>
+      <div style="display: flex; justify-content: space-between; font-weight: 700; font-size: 16px"><span>Total</span><span>₹[TOTAL]</span></div>
+    </div>
+  </div>
+
+  <div class="rise d5" style="position: absolute; left: 20px; right: 20px; bottom: 24px">
+    <a href="Track.dc.html" class="tap" style="height: 58px; border-radius: 29px; background: {{accent}}; color: #FFFFFF; text-decoration: none; font-weight: 700; font-size: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 12px 26px rgba(163,33,79,0.28)">Place order
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"></path></svg>
+    </a>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#A3214F","options":["#A3214F","#2E5E4E","#7A3E9D","#B4441C"]},"motion":{"editor":"boolean","default":true},"$preview":{"width":390,"height":1000}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { pin: '', checked: true, local: true, pay: 0 };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#A3214F';
+    const s = this.state;
+    const payList = ['UPI', 'Card', 'COD'];
+    return {
+      accent,
+      motionClass: (this.props.motion ?? true) ? 'm-on' : 'm-off',
+      pin: s.pin,
+      setPin: (e) => this.setState({ pin: e.target.value }),
+      check: () => this.setState({ checked: true, local: !s.local }),
+      checked: s.checked,
+      localMark: s.local ? '✓' : '–',
+      localColor: s.local ? '#2E5E4E' : '#8A7180',
+      localText: s.local
+        ? 'You are near our shop: same-day local delivery and nightwear/lingerie requests available'
+        : 'Outside local area: nightwear and lingerie are available for shop pickup only',
+      pays: payList.map((label, i) => ({
+        label,
+        border: i === s.pay ? accent : '#EADCE2',
+        pick: () => this.setState({ pay: i })
+      }))
+    };
+  }
+}
+</script>
+</body>
+</html>

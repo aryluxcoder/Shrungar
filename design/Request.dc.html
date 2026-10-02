@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Private Request</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Marcellus&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#A3214F}a:hover{color:#7A1739}
+@keyframes rise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes pop{0%{transform:scale(.6);opacity:0}70%{transform:scale(1.08)}100%{transform:scale(1);opacity:1}}
+@keyframes draw{from{stroke-dashoffset:40}to{stroke-dashoffset:0}}
+@keyframes glow{0%,100%{box-shadow:0 0 0 0 rgba(246,201,214,.5)}50%{box-shadow:0 0 0 14px rgba(246,201,214,0)}}
+.m-on .rise{animation:rise .7s cubic-bezier(.2,.8,.2,1) both}
+.m-on .pop{animation:pop .5s cubic-bezier(.2,.8,.2,1) both}
+.m-on .draw{stroke-dasharray:40;animation:draw .7s .25s ease-out both}
+.m-on .glow{animation:glow 2.4s ease-in-out infinite}
+.d1{animation-delay:.08s!important}.d2{animation-delay:.16s!important}.d3{animation-delay:.24s!important}.d4{animation-delay:.32s!important}.d5{animation-delay:.4s!important}
+.tap{transition:transform .18s ease,background .2s ease,color .2s ease}
+.tap:active{transform:scale(.95)}
+input::placeholder,textarea::placeholder{color:#8A7180}
+</style>
+</helmet>
+<div class="{{motionClass}}" style="width: 390px; height: 1060px; box-sizing: border-box; background: #2B1622; font-family: Manrope, system-ui, sans-serif; color: #2B1622; position: relative; overflow: hidden">
+
+  <div style="padding: 20px 20px 34px; display: flex; flex-direction: column; gap: 16px; color: #FFFFFF">
+    <div style="display: flex; align-items: center; justify-content: space-between">
+      <a href="Main.dc.html" aria-label="Back" class="tap" style="width: 46px; height: 46px; border-radius: 23px; background: rgba(255,255,255,0.1); display: flex; align-items: center; justify-content: center; color: #FFFFFF">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg>
+      </a>
+      <span style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #F6C9D6; background: rgba(246,201,214,0.12); border-radius: 14px; padding: 7px 12px">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="9" rx="2"></rect><path d="M8 11V8a4 4 0 0 1 8 0v3"></path></svg>Private &amp; discreet</span>
+    </div>
+    <div class="rise" style="font-family: Marcellus, serif; font-size: 30px; line-height: 1.12">Request nightwear &amp; lingerie</div>
+    <div class="rise d1" style="font-size: 14px; line-height: 1.5; color: #E6D3DC">Share what you are looking for. Our shop team checks stock and replies on WhatsApp or a call. Nothing is charged until you confirm.</div>
+  </div>
+
+  <div style="position: absolute; left: 0; right: 0; top: 232px; bottom: 0; background: #FFF7F2; border-radius: 30px 30px 0 0; padding: 22px 20px; box-sizing: border-box">
+    <sc-if value="{{showForm}}" hint-placeholder-val="{{ true }}">
+      <div style="display: flex; flex-direction: column; gap: 18px">
+        <div class="rise d1" style="display: flex; flex-direction: column; gap: 10px">
+          <div style="font-size: 14px; font-weight: 700">I am looking for</div>
+          <div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+            <sc-for list="{{cats}}" as="c" hint-placeholder-count="2">
+              <button type="button" onClick="{{c.pick}}" class="tap" style="height: 56px; border-radius: 18px; border: 2px solid {{c.border}}; background: {{c.bg}}; color: {{c.fg}}; font: inherit; font-weight: 700; font-size: 15px; cursor: pointer">{{c.label}}</button>
+            </sc-for>
+          </div>
+        </div>
+
+        <div class="rise d2" style="display: flex; flex-direction: column; gap: 10px">
+          <div style="font-size: 14px; font-weight: 700">Size</div>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap">
+            <sc-for list="{{sizes}}" as="s" hint-placeholder-count="6">
+              <button type="button" onClick="{{s.pick}}" class="tap" style="min-width: 48px; height: 44px; padding: 0 12px; border-radius: 22px; border: none; background: {{s.bg}}; color: {{s.fg}}; font: inherit; font-weight: 700; font-size: 14px; cursor: pointer">{{s.label}}</button>
+            </sc-for>
+          </div>
+        </div>
+
+        <label class="rise d3" style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 14px; font-weight: 700">Style, fabric or colour you prefer</span>
+          <textarea rows="3" placeholder="e.g. cotton night suit, pastel, full sleeves" style="border: none; border-radius: 16px; background: #FFFFFF; padding: 14px; font: inherit; font-size: 14px; color: #2B1622; resize: none; box-shadow: 0 2px 10px rgba(43,22,34,0.05)"></textarea>
+        </label>
+
+        <div class="rise d4" style="display: flex; flex-direction: column; gap: 10px">
+          <div style="font-size: 14px; font-weight: 700">How would you like to receive it?</div>
+          <sc-for list="{{modes}}" as="m" hint-placeholder-count="2">
+            <button type="button" onClick="{{m.pick}}" class="tap" style="display: flex; align-items: center; gap: 12px; text-align: left; padding: 14px; border-radius: 18px; border: 2px solid {{m.border}}; background: #FFFFFF; font: inherit; color: #2B1622; cursor: pointer">
+              <span style="flex: none; width: 22px; height: 22px; border-radius: 11px; border: 2px solid {{m.border}}; display: flex; align-items: center; justify-content: center"><span style="width: 10px; height: 10px; border-radius: 5px; background: {{m.dot}}"></span></span>
+              <span style="display: flex; flex-direction: column; gap: 2px"><span style="font-weight: 700; font-size: 15px">{{m.label}}</span><span style="font-size: 12px; color: #6E5563">{{m.sub}}</span></span>
+            </button>
+          </sc-for>
+        </div>
+
+        <label class="rise d5" style="display: flex; flex-direction: column; gap: 8px">
+          <span style="font-size: 14px; font-weight: 700">WhatsApp number</span>
+          <input type="tel" placeholder="+91" style="height: 50px; border: none; border-radius: 16px; background: #FFFFFF; padding: 0 14px; font: inherit; font-size: 15px; color: #2B1622; box-shadow: 0 2px 10px rgba(43,22,34,0.05)">
+        </label>
+
+        <button type="button" onClick="{{submit}}" class="tap rise d5" style="height: 56px; border: none; border-radius: 28px; background: {{accent}}; color: #FFFFFF; font: inherit; font-weight: 700; font-size: 16px; cursor: pointer">Send request to shop</button>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{sent}}" hint-placeholder-val="{{ false }}">
+      <div style="display: flex; flex-direction: column; align-items: center; text-align: center; gap: 16px; padding-top: 60px">
+        <span class="pop glow" style="width: 96px; height: 96px; border-radius: 48px; background: #F6C9D6; display: flex; align-items: center; justify-content: center; color: #7A1739">
+          <svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path class="draw" d="M5 12l5 5 9-10"></path></svg>
+        </span>
+        <div class="rise d1" style="font-family: Marcellus, serif; font-size: 26px">Request sent</div>
+        <div class="rise d2" style="font-size: 14px; line-height: 1.55; color: #5A4250; max-width: 290px">We will message you within [SHOP HOURS] with photos and price for your {{summary}}.</div>
+        <a href="Track.dc.html" class="tap rise d3" style="margin-top: 8px; height: 52px; padding: 0 26px; border-radius: 26px; background: #2B1622; color: #FFFFFF; text-decoration: none; font-weight: 700; display: flex; align-items: center">Track my request</a>
+        <button type="button" onClick="{{reset}}" class="rise d4" style="height: 44px; border: none; background: transparent; font: inherit; font-weight: 600; color: {{accent}}; cursor: pointer">Make another request</button>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"accent":{"editor":"color","default":"#A3214F","options":["#A3214F","#2E5E4E","#7A3E9D","#B4441C"]},"motion":{"editor":"boolean","default":true},"$preview":{"width":390,"height":1060}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    this.state = { cat: 0, size: 2, mode: 0, sent: false };
+  }
+  renderVals() {
+    const accent = this.props.accent ?? '#A3214F';
+    const s = this.state;
+    const catList = ['Nightwear', 'Lingerie'];
+    const sizeList = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+    const modeList = [
+      { label: 'Pick up at our shop', sub: 'Shop 20, Sector 9, New Panvel · try before you buy' },
+      { label: 'Local home delivery', sub: 'New Panvel & nearby (within [X] km) · discreet packing' }
+    ];
+    return {
+      accent,
+      motionClass: (this.props.motion ?? true) ? 'm-on' : 'm-off',
+      cats: catList.map((label, i) => ({
+        label,
+        bg: i === s.cat ? '#2B1622' : '#FFFFFF',
+        fg: i === s.cat ? '#FFFFFF' : '#2B1622',
+        border: i === s.cat ? '#2B1622' : '#EADCE2',
+        pick: () => this.setState({ cat: i })
+      })),
+      sizes: sizeList.map((label, i) => ({
+        label,
+        bg: i === s.size ? accent : '#FFFFFF',
+        fg: i === s.size ? '#FFFFFF' : '#2B1622',
+        pick: () => this.setState({ size: i })
+      })),
+      modes: modeList.map((m, i) => ({
+        ...m,
+        border: i === s.mode ? accent : '#EADCE2',
+        dot: i === s.mode ? accent : 'transparent',
+        pick: () => this.setState({ mode: i })
+      })),
+      showForm: !s.sent,
+      sent: s.sent,
+      summary: catList[s.cat].toLowerCase() + ' in size ' + sizeList[s.size],
+      submit: () => this.setState({ sent: true }),
+      reset: () => this.setState({ sent: false })
+    };
+  }
+}
+</script>
+</body>
+</html>
