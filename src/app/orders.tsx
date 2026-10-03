@@ -105,7 +105,7 @@ function RequestCard({ request, step }: { request: PrivateRequest; step: number 
         </View>
         <View style={[styles.chip, { backgroundColor: Colors.blush }]}>
           <Txt weight="bold" size={12}>
-            {request.mode === 'local' ? 'Local' : 'Pickup'}
+            {request.mode === 'local' ? request.area ?? 'Local' : 'Pickup'}
           </Txt>
         </View>
       </View>

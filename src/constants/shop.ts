@@ -14,10 +14,10 @@ export const Shop = {
   // TODO: Opening hours, e.g. 'Mon–Sat, 10 am – 9 pm'.
   hours: '',
 
-  // TODO: Add every pincode the shop delivers to locally (nightwear & lingerie, same-day delivery).
+  // Home delivery from the shop (handmade orders and nightwear & lingerie requests), mostly Khanda Colony.
+  // Both areas share pincode 410206, which also covers the rest of Panvel, so customers pick their area.
+  localAreas: ['Khanda Colony', 'New Panvel'],
   localPincodes: ['410206'],
-  // TODO: Local delivery radius in km, shown on the request screen.
-  localRadiusKm: null as number | null,
 
   // SAMPLE values: confirm before launch.
   shippingDays: '5–8',
@@ -26,8 +26,18 @@ export const Shop = {
   localDeliveryFee: 0,
 } as const;
 
+export const localAreasLabel = Shop.localAreas.join(' & ');
+
 export function isLocalPincode(pin: string) {
   return (Shop.localPincodes as readonly string[]).includes(pin.trim());
+}
+
+export function isLocalArea(area: string | undefined) {
+  return !!area && (Shop.localAreas as readonly string[]).includes(area);
+}
+
+export function isLocalDelivery(pin: string, area: string | undefined) {
+  return isLocalPincode(pin) && isLocalArea(area);
 }
 
 export function formatPrice(amount: number) {

@@ -22,6 +22,8 @@ export type Address = {
   city: string;
   state: string;
   pincode: string;
+  // Local delivery area (Khanda Colony / New Panvel) when the pincode is near the shop.
+  area?: string;
 };
 
 export type PaymentMethod = 'UPI' | 'Card' | 'COD';
@@ -59,6 +61,7 @@ export type PrivateRequest = {
   size: string;
   notes: string;
   mode: ReceiveMode;
+  area?: string;
   whatsapp: string;
   status: RequestStatus;
 };

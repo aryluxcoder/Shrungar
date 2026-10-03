@@ -4,7 +4,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, use, useEffect, useRef, useState, type ReactNode } from 'react';
 
-import { Shop, isLocalPincode } from '@/constants/shop';
+import { Shop, isLocalDelivery } from '@/constants/shop';
 import { getProduct } from '@/data/catalogue';
 
 import type {
@@ -175,7 +175,7 @@ function useShopState() {
     orders: state.orders.filter((o) => o.userId === userId),
     placeOrder(payment: PaymentMethod, address: Address) {
       if (!userId || bagLines.length === 0) return null;
-      const local = isLocalPincode(address.pincode);
+      const local = isLocalDelivery(address.pincode, address.area);
       const delivery = deliveryFor(subtotal, local);
       const order: Order = {
         id: makeId('SH'),
@@ -196,7 +196,14 @@ function useShopState() {
 
     // Private requests (nightwear & lingerie)
     requests: state.requests.filter((r) => r.userId === userId),
-    sendRequest(input: { category: RequestCategory; size: string; notes: string; mode: ReceiveMode; whatsapp: string }) {
+    sendRequest(input: {
+      category: RequestCategory;
+      size: string;
+      notes: string;
+      mode: ReceiveMode;
+      area?: string;
+      whatsapp: string;
+    }) {
       if (!userId) return null;
       const request: PrivateRequest = {
         ...input,

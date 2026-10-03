@@ -9,9 +9,11 @@
     "userInterfaceStyle": "light",
     "backgroundColor": "#FFF7F2",
     "ios": {
+      "bundleIdentifier": "app.shrungar.com",
       "supportsTablet": false
     },
     "android": {
+      "package": "app.shrungar.com",
       "adaptiveIcon": {
         "backgroundColor": "#A3214F",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

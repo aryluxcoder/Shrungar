@@ -39,11 +39,21 @@ Sign-in, payments and the shop's replies are simulated. Nothing leaves the phone
 All in [src/constants/shop.ts](src/constants/shop.ts):
 
 - Opening hours
-- Local delivery pincodes and radius (only 410206 is listed now)
 - Shipping days, shipping fee and free-shipping threshold (current values are samples)
+
+Home delivery from the shop covers Khanda Colony and New Panvel (`localAreas` in the same file).
+Their pincode, 410206, also covers the rest of Panvel, so the bag asks local customers which area they are in.
 
 Products, prices and descriptions in [src/data/catalogue.ts](src/data/catalogue.ts) are samples.
 Product photos replace the striped placeholders once a `photo` URL is set.
+
+## Firebase config
+
+Firebase project: `shrungar-f6de8`. Android package and iOS bundle ID: `app.shrungar.com`.
+
+This repository is public, so `google-services.json` is not committed. Download it from the Firebase
+console (Project settings → Your apps) and put it in the project root. EAS builds will read it from a
+`GOOGLE_SERVICES_JSON` file environment variable instead (see [app.config.js](app.config.js)).
 
 ## Project layout
 

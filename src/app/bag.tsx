@@ -10,14 +10,30 @@ import { ProductPhoto } from '@/components/product-photo';
 import { Tap } from '@/components/tap';
 import { Txt } from '@/components/txt';
 import { Button, Field, Label, ScreenHeader } from '@/components/ui';
-import { Shop, formatPrice, isLocalPincode } from '@/constants/shop';
+import { Shop, formatPrice, isLocalDelivery, isLocalPincode, localAreasLabel } from '@/constants/shop';
 import { Colors, Shadows } from '@/constants/theme';
 import { deliveryFor, useShop } from '@/store/shop-store';
 import type { Address, PaymentMethod } from '@/store/types';
 
 const payments: PaymentMethod[] = ['UPI', 'Card', 'COD'];
 
-const addressFields: { key: Exclude<keyof Address, 'pincode'>; placeholder: string; numeric?: boolean }[] = [
+// The shop's pincode also covers the rest of Panvel, so local customers pick their area.
+const areaChoices = [...Shop.localAreas, 'Elsewhere in Panvel'];
+
+function CheckLine({ ok, text }: { ok?: boolean; text: string }) {
+  return (
+    <View style={styles.checkLine}>
+      <Txt weight="bold" color={ok ? Colors.sage : Colors.faint}>
+        {ok ? '✓' : '–'}
+      </Txt>
+      <Txt size={13} style={{ flex: 1, lineHeight: 19 }}>
+        {text}
+      </Txt>
+    </View>
+  );
+}
+
+const addressFields: { key: Exclude<keyof Address, 'pincode' | 'area'>; placeholder: string; numeric?: boolean }[] = [
   { key: 'name', placeholder: 'Full name' },
   { key: 'phone', placeholder: 'Mobile number', numeric: true },
   { key: 'line1', placeholder: 'House / flat, building, street' },
@@ -32,8 +48,9 @@ export default function BagScreen() {
 
   const [pin, setPin] = useState(savedPin);
   const [checkedPin, setCheckedPin] = useState(savedPin);
+  const [area, setArea] = useState(savedAddress?.pincode === savedPin ? savedAddress?.area : undefined);
   const [payment, setPayment] = useState<PaymentMethod>('UPI');
-  const [address, setAddress] = useState<Omit<Address, 'pincode'>>({
+  const [address, setAddress] = useState<Omit<Address, 'pincode' | 'area'>>({
     name: savedAddress?.name ?? user?.name ?? '',
     phone: savedAddress?.phone ?? user?.phone?.replace(/^\+91/, '') ?? '',
     line1: savedAddress?.line1 ?? '',
@@ -43,13 +60,16 @@ export default function BagScreen() {
   });
   const [error, setError] = useState('');
 
-  const local = checkedPin ? isLocalPincode(checkedPin) : false;
-  const delivery = checkedPin ? deliveryFor(subtotal, local) : null;
+  const askArea = checkedPin ? isLocalPincode(checkedPin) : false;
+  const local = isLocalDelivery(checkedPin, area);
+  const ready = !!checkedPin && (!askArea || !!area);
+  const delivery = ready ? deliveryFor(subtotal, local) : null;
 
   const check = () => {
     const clean = pin.replace(/\D/g, '');
     if (clean.length !== 6) return setError('Enter a 6-digit pincode');
     setError('');
+    if (clean !== checkedPin) setArea(undefined);
     setPin(clean);
     setCheckedPin(clean);
     setPincode(clean);
@@ -57,11 +77,12 @@ export default function BagScreen() {
 
   const order = () => {
     if (!checkedPin) return setError('Check your pincode first');
+    if (askArea && !area) return setError('Choose your area');
     if (!address.name.trim() || !address.line1.trim() || !address.city.trim() || !address.state.trim())
       return setError('Please fill in your delivery address');
     if (address.phone.replace(/\D/g, '').length !== 10) return setError('Enter a 10-digit mobile number');
     if (!user) return router.push('/sign-in');
-    const id = placeOrder(payment, { ...address, pincode: checkedPin });
+    const id = placeOrder(payment, { ...address, pincode: checkedPin, area: askArea ? area : undefined });
     if (id) router.replace({ pathname: '/orders', params: { placed: id } });
   };
 
@@ -155,24 +176,46 @@ export default function BagScreen() {
           </View>
           {checkedPin ? (
             <Animated.View key={checkedPin} entering={FadeIn.duration(300)} style={styles.checkCard}>
-              <View style={styles.checkLine}>
-                <Txt weight="bold" color={Colors.sage}>
-                  ✓
-                </Txt>
-                <Txt size={13} style={{ flex: 1, lineHeight: 19 }}>
-                  Handcrafted items: delivered to {checkedPin} in {Shop.shippingDays} days
-                </Txt>
-              </View>
-              <View style={styles.checkLine}>
-                <Txt weight="bold" color={local ? Colors.sage : Colors.faint}>
-                  {local ? '✓' : '–'}
-                </Txt>
-                <Txt size={13} style={{ flex: 1, lineHeight: 19 }}>
-                  {local
-                    ? 'You are near our shop: local home delivery and nightwear/lingerie requests available'
-                    : 'Outside our local area: nightwear and lingerie are available for shop pickup only'}
-                </Txt>
-              </View>
+              {askArea ? (
+                <View style={{ gap: 8 }}>
+                  <Txt weight="semibold" size={13}>
+                    Which area are you in?
+                  </Txt>
+                  <View style={styles.areas}>
+                    {areaChoices.map((a) => {
+                      const on = a === area;
+                      return (
+                        <Tap
+                          key={a}
+                          accessibilityRole="radio"
+                          accessibilityState={{ checked: on }}
+                          onPress={() => {
+                            setArea(a);
+                            setError('');
+                          }}
+                          style={[styles.area, on && { backgroundColor: Colors.ink }]}>
+                          <Txt weight="bold" size={13} color={on ? Colors.white : Colors.ink}>
+                            {a}
+                          </Txt>
+                        </Tap>
+                      );
+                    })}
+                  </View>
+                </View>
+              ) : null}
+              {local ? (
+                <>
+                  <CheckLine ok text={`Home delivery from our shop in ${area}`} />
+                  <CheckLine ok text="Nightwear & lingerie requests can be delivered too" />
+                </>
+              ) : ready ? (
+                <>
+                  <CheckLine ok text={`Handcrafted items: delivered to ${checkedPin} in ${Shop.shippingDays} days`} />
+                  <CheckLine
+                    text={`Home delivery from our shop is only in ${localAreasLabel}. Nightwear and lingerie are available for shop pickup.`}
+                  />
+                </>
+              ) : null}
             </Animated.View>
           ) : null}
         </Animated.View>
@@ -229,9 +272,17 @@ export default function BagScreen() {
           </View>
           <View style={styles.sumRow}>
             <Txt color={Colors.muted}>Delivery</Txt>
-            <Txt>{delivery === null ? 'Check pincode' : delivery === 0 ? 'Free' : formatPrice(delivery)}</Txt>
+            <Txt>
+              {delivery === null
+                ? checkedPin
+                  ? 'Choose your area'
+                  : 'Check pincode'
+                : delivery === 0
+                  ? 'Free'
+                  : formatPrice(delivery)}
+            </Txt>
           </View>
-          {!local && subtotal < Shop.freeShippingAbove ? (
+          {ready && !local && subtotal < Shop.freeShippingAbove ? (
             <Txt size={12} color={Colors.sage}>
               Add {formatPrice(Shop.freeShippingAbove - subtotal)} more for free delivery
             </Txt>
@@ -287,8 +338,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkCard: { backgroundColor: Colors.surface, borderRadius: 16, padding: 14, gap: 6 },
+  checkCard: { backgroundColor: Colors.surface, borderRadius: 16, padding: 14, gap: 10 },
   checkLine: { flexDirection: 'row', gap: 8 },
+  areas: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  area: {
+    height: 40,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: Colors.page,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   pay: {
     flex: 1,
     height: 50,

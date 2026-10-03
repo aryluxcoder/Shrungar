@@ -2,7 +2,7 @@ import { router, useIsFocused } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
+import Animated, { FadeIn } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon } from '@/components/icons';
@@ -11,7 +11,7 @@ import { useTabBarSpace } from '@/components/tab-bar';
 import { Tap } from '@/components/tap';
 import { Txt } from '@/components/txt';
 import { Button, Field, Label, TextLink } from '@/components/ui';
-import { Shop } from '@/constants/shop';
+import { Shop, localAreasLabel } from '@/constants/shop';
 import { Colors, Fonts } from '@/constants/theme';
 import { useShop } from '@/store/shop-store';
 import type { ReceiveMode, RequestCategory } from '@/store/types';
@@ -20,11 +20,7 @@ const categories: RequestCategory[] = ['Nightwear', 'Lingerie'];
 const sizes = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const modes: { id: ReceiveMode; label: string; sub: string }[] = [
   { id: 'pickup', label: 'Pick up at our shop', sub: `${Shop.shortAddress} · try before you buy` },
-  {
-    id: 'local',
-    label: 'Local home delivery',
-    sub: `New Panvel & nearby${Shop.localRadiusKm ? ` (within ${Shop.localRadiusKm} km)` : ''} · discreet packing`,
-  },
+  { id: 'local', label: 'Local home delivery', sub: `${localAreasLabel} only · discreet packing` },
 ];
 
 export default function RequestScreen() {
@@ -37,15 +33,17 @@ export default function RequestScreen() {
   const [size, setSize] = useState('M');
   const [notes, setNotes] = useState('');
   const [mode, setMode] = useState<ReceiveMode>('pickup');
+  const [area, setArea] = useState<string>();
   const [whatsapp, setWhatsapp] = useState(user?.phone?.replace(/^\+91/, '') ?? '');
   const [error, setError] = useState('');
   const [sentSummary, setSentSummary] = useState('');
 
   const submit = () => {
     const digits = whatsapp.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '');
+    if (mode === 'local' && !area) return setError('Choose your area for home delivery');
     if (digits.length !== 10) return setError('Enter your 10-digit WhatsApp number');
     if (!user) return router.push('/sign-in');
-    sendRequest({ category, size, notes: notes.trim(), mode, whatsapp: digits });
+    sendRequest({ category, size, notes: notes.trim(), mode, area: mode === 'local' ? area : undefined, whatsapp: digits });
     setError('');
     setSentSummary(`${category.toLowerCase()} in size ${size}`);
   };
@@ -167,7 +165,10 @@ export default function RequestScreen() {
                       key={m.id}
                       accessibilityRole="radio"
                       accessibilityState={{ checked: on }}
-                      onPress={() => setMode(m.id)}
+                      onPress={() => {
+                        setMode(m.id);
+                        setError('');
+                      }}
                       style={[styles.mode, { borderColor: on ? Colors.accent : Colors.line }]}>
                       <View style={[styles.radio, { borderColor: on ? Colors.accent : Colors.line }]}>
                         {on ? <View style={styles.radioDot} /> : null}
@@ -183,6 +184,33 @@ export default function RequestScreen() {
                     </Tap>
                   );
                 })}
+                {mode === 'local' ? (
+                  <Animated.View entering={FadeIn.duration(250)} style={{ gap: 8 }}>
+                    <Txt weight="semibold" size={13} color={Colors.body}>
+                      Your area
+                    </Txt>
+                    <View style={styles.areas}>
+                      {Shop.localAreas.map((a) => {
+                        const on = a === area;
+                        return (
+                          <Tap
+                            key={a}
+                            accessibilityRole="radio"
+                            accessibilityState={{ checked: on }}
+                            onPress={() => {
+                              setArea(a);
+                              setError('');
+                            }}
+                            style={[styles.area, on && { backgroundColor: Colors.ink }]}>
+                            <Txt weight="bold" size={14} color={on ? Colors.white : Colors.ink}>
+                              {a}
+                            </Txt>
+                          </Tap>
+                        );
+                      })}
+                    </View>
+                  </Animated.View>
+                ) : null}
               </Animated.View>
 
               <Animated.View entering={rise(5)} style={{ gap: 8 }}>
@@ -204,14 +232,14 @@ export default function RequestScreen() {
                     style={styles.phoneInput}
                   />
                 </View>
+              </Animated.View>
+
+              <Animated.View entering={rise(5)} style={{ gap: 8 }}>
                 {error ? (
-                  <Txt weight="semibold" size={13} color={Colors.accent}>
+                  <Txt weight="semibold" size={13} color={Colors.accent} style={{ textAlign: 'center' }}>
                     {error}
                   </Txt>
                 ) : null}
-              </Animated.View>
-
-              <Animated.View entering={rise(5)}>
                 <Button label={user ? 'Send request to shop' : 'Sign in & send request'} height={56} onPress={submit} />
               </Animated.View>
             </View>
@@ -274,6 +302,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
   },
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  areas: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  area: {
+    height: 44,
+    paddingHorizontal: 16,
+    borderRadius: 22,
+    backgroundColor: Colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: Colors.accent },
   phone: {
     flexDirection: 'row',

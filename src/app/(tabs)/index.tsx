@@ -11,6 +11,7 @@ import { ProductCard } from '@/components/product-card';
 import { useTabBarSpace } from '@/components/tab-bar';
 import { Tap } from '@/components/tap';
 import { Txt } from '@/components/txt';
+import { localAreasLabel } from '@/constants/shop';
 import { Colors, Fonts, Shadows } from '@/constants/theme';
 import { Categories, Products } from '@/data/catalogue';
 import { openWhatsApp } from '@/lib/links';
@@ -150,7 +151,7 @@ export default function HomeScreen() {
               Near our shop
             </Txt>
             <Txt size={12} color={Colors.muted} style={{ lineHeight: 17 }}>
-              Local home delivery in New Panvel & nearby
+              Home delivery in {localAreasLabel}
             </Txt>
           </View>
         </Animated.View>
