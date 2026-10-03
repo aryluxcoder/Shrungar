@@ -1,5 +1,5 @@
-// SAMPLE catalogue used until products are loaded from Firebase.
-// Names follow the designs; prices, sizes and descriptions are placeholders to replace.
+// Product types, form options and the SAMPLE catalogue used in demo mode (Expo Go and web).
+// Real builds load products that shop admins add in the app (Firestore `products`).
 
 export type CategoryId = 'clothes' | 'mats' | 'bags';
 
@@ -31,8 +31,16 @@ export type Product = {
   description: string;
   colours?: Swatch[];
   sizes?: string[];
-  photo?: string;
+  // Photo URLs, cover first.
+  photos?: string[];
   pattern: PhotoPattern;
+  // 'hidden' products stay out of the shop but keep their details.
+  status?: 'active' | 'hidden';
+  // Who listed it. Every product is the shop's for now; kept for a future open marketplace.
+  sellerId?: string;
+  sellerName?: string;
+  createdAt?: number;
+  updatedAt?: number;
 };
 
 const blush: PhotoPattern = { a: '#F6D7C3', b: '#F1C8B0', angle: 45, stripe: 10, ink: '#6E5563' };
@@ -40,7 +48,30 @@ const sage: PhotoPattern = { a: '#D9E7E0', b: '#C7DBD1', angle: 90, stripe: 12, 
 const marigold: PhotoPattern = { a: '#FBE7C6', b: '#F6D9A8', angle: 135, stripe: 10, ink: '#7A5A2A' };
 const rose: PhotoPattern = { a: '#F7DCE4', b: '#F0C9D5', angle: 90, stripe: 9, ink: '#7A4A5C' };
 
-export const Products: Product[] = [
+// Placeholder stripes for products without photos.
+export function patternFor(category: CategoryId): PhotoPattern {
+  return { clothes: blush, mats: sage, bags: marigold }[category];
+}
+
+// Choices offered in the admin product form.
+export const CraftOptions = ['Handwoven', 'Hand block-printed', 'Hand-embroidered', 'Hand-dyed', 'Handmade'];
+export const SizeOptions = ['XS', 'S', 'M', 'L', 'XL', 'XXL', 'Free size'];
+export const ColourOptions: Swatch[] = [
+  { name: 'Rani', hex: '#A3214F' },
+  { name: 'Rose', hex: '#E7A5B8' },
+  { name: 'Red', hex: '#C0392B' },
+  { name: 'Clay', hex: '#B4441C' },
+  { name: 'Marigold', hex: '#E9A23B' },
+  { name: 'Natural', hex: '#D8C3A0' },
+  { name: 'Sage', hex: '#9DBFAE' },
+  { name: 'Teal', hex: '#2E5E4E' },
+  { name: 'Indigo', hex: '#3E4C7A' },
+  { name: 'Sky', hex: '#8FB8DE' },
+  { name: 'Black', hex: '#2B2B2B' },
+  { name: 'White', hex: '#F5F1EA' },
+];
+
+export const SampleProducts: Product[] = [
   {
     id: 'block-print-kurta',
     name: 'Block-print cotton kurta',
@@ -133,10 +164,6 @@ export const Products: Product[] = [
     pattern: { ...rose, angle: 45 },
   },
 ];
-
-export function getProduct(id: string | undefined) {
-  return Products.find((p) => p.id === id);
-}
 
 export function getCategory(id: CategoryId) {
   return Categories.find((c) => c.id === id)!;

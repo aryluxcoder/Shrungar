@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
-import { useId } from 'react';
-import { View, type StyleProp, type ViewStyle } from 'react-native';
+import { useId, useState } from 'react';
+import { ScrollView, StyleSheet, useWindowDimensions, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Defs, Pattern, Rect } from 'react-native-svg';
 
 import { Txt } from '@/components/txt';
@@ -43,3 +43,36 @@ export function ProductPhoto({ photo, pattern, label, style }: Props) {
     </View>
   );
 }
+
+// Full-width swipeable photos with page dots (product page).
+export function PhotoGallery({ photos, pattern, height }: { photos: string[]; pattern: PhotoPattern; height: number }) {
+  const { width } = useWindowDimensions();
+  const [page, setPage] = useState(0);
+
+  if (photos.length <= 1) return <ProductPhoto photo={photos[0]} pattern={pattern} style={{ height }} />;
+
+  return (
+    <View style={{ height }}>
+      <ScrollView
+        horizontal
+        pagingEnabled
+        showsHorizontalScrollIndicator={false}
+        onMomentumScrollEnd={(e) => setPage(Math.round(e.nativeEvent.contentOffset.x / width))}>
+        {photos.map((uri) => (
+          <Image key={uri} source={uri} style={{ width, height }} contentFit="cover" transition={200} />
+        ))}
+      </ScrollView>
+      <View style={styles.dots} pointerEvents="none">
+        {photos.map((uri, i) => (
+          <View key={uri} style={[styles.dot, i === page && styles.dotOn]} />
+        ))}
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  dots: { position: 'absolute', bottom: 54, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 6 },
+  dot: { width: 7, height: 7, borderRadius: 4, backgroundColor: 'rgba(255,255,255,0.6)' },
+  dotOn: { width: 18, backgroundColor: '#FFFFFF' },
+});

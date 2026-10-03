@@ -7,7 +7,19 @@ import { Platform } from 'react-native';
 
 import type { User as FirebaseUser } from '@react-native-firebase/auth';
 
-import type { ChatMessage, Order, PrivateRequest, Review, ReviewComment, User } from '@/store/types';
+import { patternFor, type Product } from '@/data/catalogue';
+import type {
+  ChatMessage,
+  Order,
+  OrderStatus,
+  PrivateRequest,
+  RequestStatus,
+  Review,
+  ReviewComment,
+  Role,
+  StaffMember,
+  User,
+} from '@/store/types';
 
 export const firebaseEnabled =
   Platform.OS !== 'web' && Constants.executionEnvironment !== ExecutionEnvironment.StoreClient;
@@ -256,4 +268,115 @@ export async function addComment(reviewId: string, comment: ReviewComment) {
 export async function setHelpful(reviewId: string, uid: string, helpful: boolean) {
   const { arrayRemove, arrayUnion, doc, updateDoc } = fb().firestore;
   await updateDoc(doc(db(), 'reviews', reviewId), { helpfulBy: helpful ? arrayUnion(uid) : arrayRemove(uid) });
+}
+
+// ---------- Products ----------
+
+function toProduct(id: string, data: Omit<Product, 'id' | 'pattern'>): Product {
+  return { ...data, id, pattern: patternFor(data.category) };
+}
+
+// Shoppers see products in the shop; admins (`all`) also see hidden ones.
+export function watchProducts(all: boolean, onChange: (products: Product[]) => void) {
+  const { collection, onSnapshot, query, where } = fb().firestore;
+  const source = all ? collection(db(), 'products') : query(collection(db(), 'products'), where('status', '==', 'active'));
+  return onSnapshot(
+    source,
+    (snap) =>
+      onChange(
+        snap.docs
+          .map((d) => toProduct(d.id, d.data() as Omit<Product, 'id' | 'pattern'>))
+          .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0)),
+      ),
+    ignore,
+  );
+}
+
+async function uploadProductPhoto(productId: string, uri: string) {
+  const { getDownloadURL, getStorage, putFile, ref } = fb().storage;
+  const name = `${Date.now()}-${Math.random().toString(36).slice(2, 6)}.jpg`;
+  const file = ref(getStorage(), `products/${productId}/${name}`);
+  await putFile(file, uri, { contentType: 'image/jpeg' });
+  return getDownloadURL(file);
+}
+
+// Uploads any new (local) photos, then saves the product.
+export async function saveProduct(product: Product) {
+  const { doc, setDoc } = fb().firestore;
+  const photos = await Promise.all(
+    (product.photos ?? []).map((uri) => (uri.startsWith('http') ? uri : uploadProductPhoto(product.id, uri))),
+  );
+  const data: Partial<Product> = { ...product, photos };
+  delete data.id;
+  delete data.pattern;
+  await setDoc(doc(db(), 'products', product.id), clean(data));
+}
+
+export async function deleteProduct(id: string) {
+  const { deleteDoc, doc } = fb().firestore;
+  await deleteDoc(doc(db(), 'products', id));
+}
+
+// ---------- Shop team ----------
+
+export function watchMyRole(email: string, onChange: (role: Role | null) => void) {
+  const { doc, onSnapshot } = fb().firestore;
+  return onSnapshot(
+    doc(db(), 'staff', email),
+    (snap) => {
+      const member = snap.data() as StaffMember | undefined;
+      onChange(member?.active ? member.role : null);
+    },
+    () => onChange(null),
+  );
+}
+
+export function watchStaff(onChange: (team: StaffMember[]) => void) {
+  const { collection, onSnapshot } = fb().firestore;
+  return onSnapshot(
+    collection(db(), 'staff'),
+    (snap) => onChange(snap.docs.map((d) => ({ ...(d.data() as StaffMember), email: d.id }))),
+    ignore,
+  );
+}
+
+export async function saveStaff(member: StaffMember) {
+  const { doc, setDoc } = fb().firestore;
+  const { email, ...data } = member;
+  await setDoc(doc(db(), 'staff', email), clean(data));
+}
+
+export async function removeStaff(email: string) {
+  const { deleteDoc, doc } = fb().firestore;
+  await deleteDoc(doc(db(), 'staff', email));
+}
+
+// ---------- All orders and requests (shop admins) ----------
+
+export function watchAllOrders(onChange: (orders: Order[]) => void) {
+  const { collection, onSnapshot } = fb().firestore;
+  return onSnapshot(
+    collection(db(), 'orders'),
+    (snap) => onChange(snap.docs.map((d) => d.data() as Order).sort(newestFirst)),
+    ignore,
+  );
+}
+
+export function watchAllRequests(onChange: (requests: PrivateRequest[]) => void) {
+  const { collection, onSnapshot } = fb().firestore;
+  return onSnapshot(
+    collection(db(), 'requests'),
+    (snap) => onChange(snap.docs.map((d) => d.data() as PrivateRequest).sort(newestFirst)),
+    ignore,
+  );
+}
+
+export async function setOrderStatus(id: string, status: OrderStatus) {
+  const { doc, updateDoc } = fb().firestore;
+  await updateDoc(doc(db(), 'orders', id), { status, updatedAt: Date.now() });
+}
+
+export async function setRequestStatus(id: string, status: RequestStatus) {
+  const { doc, updateDoc } = fb().firestore;
+  await updateDoc(doc(db(), 'requests', id), { status, updatedAt: Date.now() });
 }

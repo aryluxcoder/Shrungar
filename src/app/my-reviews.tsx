@@ -9,13 +9,12 @@ import { Tap } from '@/components/tap';
 import { Txt } from '@/components/txt';
 import { ScreenHeader } from '@/components/ui';
 import { Colors } from '@/constants/theme';
-import { getProduct } from '@/data/catalogue';
 import { formatDate } from '@/lib/format';
 import { useShop } from '@/store/shop-store';
 
 export default function MyReviewsScreen() {
   const insets = useSafeAreaInsets();
-  const { myReviews } = useShop();
+  const { myReviews, productById } = useShop();
 
   return (
     <ScrollView
@@ -36,7 +35,7 @@ export default function MyReviewsScreen() {
               style={styles.card}>
               <View style={styles.head}>
                 <Txt weight="bold" style={{ flex: 1 }} numberOfLines={1}>
-                  {getProduct(r.productId)?.name ?? 'Product'}
+                  {productById(r.productId)?.name ?? 'Product'}
                 </Txt>
                 <Txt weight="bold" size={13} color={Colors.marigoldInk}>
                   ★ {r.rating}

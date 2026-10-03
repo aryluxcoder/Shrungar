@@ -13,17 +13,17 @@ import { Tap } from '@/components/tap';
 import { Txt } from '@/components/txt';
 import { localAreasLabel } from '@/constants/shop';
 import { Colors, Fonts, Shadows } from '@/constants/theme';
-import { Categories, Products } from '@/data/catalogue';
+import { Categories } from '@/data/catalogue';
 import { openWhatsApp } from '@/lib/links';
 import { useShop } from '@/store/shop-store';
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const tabSpace = useTabBarSpace();
-  const { pincode } = useShop();
+  const { pincode, products } = useShop();
   const [query, setQuery] = useState('');
 
-  const fresh = Products.slice(0, 4);
+  const fresh = products.slice(0, 4);
 
   const search = () => {
     router.navigate({ pathname: '/shop', params: { q: query.trim() } });
@@ -156,20 +156,25 @@ export default function HomeScreen() {
           </View>
         </Animated.View>
 
-        <View style={{ gap: 12 }}>
-          <Animated.View entering={rise(5)}>
-            <Txt display size={21}>
-              Fresh from the loom
-            </Txt>
-          </Animated.View>
-          {[0, 2].map((start) => (
-            <Animated.View key={start} entering={rise(6)} style={styles.twoUp}>
-              {fresh.slice(start, start + 2).map((p) => (
-                <ProductCard key={p.id} product={p} />
-              ))}
+        {fresh.length ? (
+          <View style={{ gap: 12 }}>
+            <Animated.View entering={rise(5)}>
+              <Txt display size={21}>
+                Fresh from the loom
+              </Txt>
             </Animated.View>
-          ))}
-        </View>
+            {[0, 2]
+              .filter((start) => start < fresh.length)
+              .map((start) => (
+                <Animated.View key={start} entering={rise(6)} style={styles.twoUp}>
+                  {fresh.slice(start, start + 2).map((p) => (
+                    <ProductCard key={p.id} product={p} />
+                  ))}
+                  {fresh.length === start + 1 ? <View style={{ flex: 1 }} /> : null}
+                </Animated.View>
+              ))}
+          </View>
+        ) : null}
       </ScrollView>
 
       <Animated.View entering={pop(6)} style={[styles.whatsapp, { bottom: tabSpace + 16 }]}>

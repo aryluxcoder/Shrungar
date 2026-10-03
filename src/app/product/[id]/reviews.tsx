@@ -1,5 +1,4 @@
 import { Image } from 'expo-image';
-import * as ImagePicker from 'expo-image-picker';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, ScrollView, StyleSheet, View } from 'react-native';
@@ -13,8 +12,8 @@ import { Txt } from '@/components/txt';
 import { Button, Field, ScreenHeader } from '@/components/ui';
 import { Features } from '@/constants/shop';
 import { Colors } from '@/constants/theme';
-import { getProduct } from '@/data/catalogue';
 import { formatDate, initial } from '@/lib/format';
+import { pickPhotos } from '@/lib/photos';
 import { useShop } from '@/store/shop-store';
 import type { Review } from '@/store/types';
 
@@ -144,9 +143,9 @@ function ReviewCard({ review, index }: { review: Review; index: number }) {
 
 export default function ReviewsScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const product = getProduct(id);
   const insets = useSafeAreaInsets();
-  const { user, reviewsFor, postReview } = useShop();
+  const { user, reviewsFor, postReview, productById } = useShop();
+  const product = productById(id);
   const [rating, setRating] = useState(0);
   const [draft, setDraft] = useState('');
   const [photo, setPhoto] = useState<string | undefined>();
@@ -156,8 +155,8 @@ export default function ReviewsScreen() {
   const average = reviews.length ? reviews.reduce((s, r) => s + r.rating, 0) / reviews.length : 0;
 
   const pickPhoto = async () => {
-    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], allowsEditing: true, quality: 0.7 });
-    if (!result.canceled) setPhoto(result.assets[0].uri);
+    const [picked] = await pickPhotos(1);
+    if (picked) setPhoto(picked);
   };
 
   const post = () => {

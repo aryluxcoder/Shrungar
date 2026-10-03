@@ -3,8 +3,11 @@ rules_version = '2';
 // Who can read and write what in Firestore.
 // Publish: Firebase console → Firestore Database → Rules → paste → Publish,
 // or `npx firebase-tools deploy --only firestore:rules`.
-// The shop team edits order and request status, review replies and chat replies from the
-// Firebase console for now (the console is not limited by these rules).
+//
+// The shop team lives in `staff/{email}` with a role:
+//   owner  – added once by hand in the Firebase console; manages the team
+//   admin  – added by the owner in the app; manages products, orders and requests
+//   seller – reserved for a future open marketplace (own products only); not offered in the app yet
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() {
@@ -16,22 +19,65 @@ service cloud.firestore {
     function createdByMe() {
       return isUser(request.resource.data.userId);
     }
+    function staffPath() {
+      return /databases/$(database)/documents/staff/$(request.auth.token.email);
+    }
+    function hasRole(roles) {
+      return signedIn()
+        && request.auth.token.email_verified == true
+        && exists(staffPath())
+        && get(staffPath()).data.active == true
+        && get(staffPath()).data.role in roles;
+    }
+    function isOwner() {
+      return hasRole(['owner']);
+    }
+    function isAdmin() {
+      return hasRole(['owner', 'admin']);
+    }
+    function isSeller() {
+      return hasRole(['owner', 'admin', 'seller']);
+    }
+    function onlyChanges(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+    }
+
+    // Shop team. Everyone can see their own entry (the app uses it to show Shop admin).
+    match /staff/{email} {
+      allow read: if (signedIn() && request.auth.token.email == email) || isAdmin();
+      allow create: if isOwner() && request.resource.data.role in ['admin', 'seller'];
+      allow update: if isOwner() && resource.data.role != 'owner' && request.resource.data.role in ['admin', 'seller'];
+      allow delete: if isOwner() && resource.data.role != 'owner';
+    }
+
+    // Products: shoppers see those in the shop; admins manage all; sellers (later) only their own.
+    match /products/{productId} {
+      allow read: if resource.data.status == 'active'
+        || isAdmin()
+        || (isSeller() && resource.data.sellerId == request.auth.uid);
+      allow create: if isSeller() && request.resource.data.sellerId == request.auth.uid;
+      allow update: if isAdmin()
+        || (isSeller() && resource.data.sellerId == request.auth.uid && request.resource.data.sellerId == request.auth.uid);
+      allow delete: if isAdmin() || (isSeller() && resource.data.sellerId == request.auth.uid);
+    }
 
     // Customer profiles: name and phone or email.
     match /users/{uid} {
       allow read, write: if isUser(uid);
     }
 
-    // Customers place and see their own orders. Status changes come from the shop.
+    // Customers place and see their own orders; admins see all and move them along.
     match /orders/{orderId} {
-      allow read: if isUser(resource.data.userId);
+      allow read: if isUser(resource.data.userId) || isAdmin();
       allow create: if createdByMe() && request.resource.data.status == 'placed';
+      allow update: if isAdmin() && onlyChanges(['status', 'updatedAt']);
     }
 
     // Private nightwear & lingerie requests work the same way.
     match /requests/{requestId} {
-      allow read: if isUser(resource.data.userId);
+      allow read: if isUser(resource.data.userId) || isAdmin();
       allow create: if createdByMe() && request.resource.data.status == 'received';
+      allow update: if isAdmin() && onlyChanges(['status', 'updatedAt']);
     }
 
     // Reviews are public. Customers post their own and can mark any review helpful once.
@@ -43,15 +89,16 @@ service cloud.firestore {
         && request.resource.data.rating <= 5
         && request.resource.data.helpfulBy == []
         && !('reply' in request.resource.data);
-      allow update: if signedIn()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['helpfulBy'])
-        && request.resource.data.helpfulBy.toSet().difference(resource.data.helpfulBy.toSet()).hasOnly([request.auth.uid])
-        && resource.data.helpfulBy.toSet().difference(request.resource.data.helpfulBy.toSet()).hasOnly([request.auth.uid]);
-      allow delete: if isUser(resource.data.userId);
+      allow update: if (isAdmin() && onlyChanges(['reply']))
+        || (signedIn()
+          && onlyChanges(['helpfulBy'])
+          && request.resource.data.helpfulBy.toSet().difference(resource.data.helpfulBy.toSet()).hasOnly([request.auth.uid])
+          && resource.data.helpfulBy.toSet().difference(request.resource.data.helpfulBy.toSet()).hasOnly([request.auth.uid]));
+      allow delete: if isUser(resource.data.userId) || isAdmin();
 
       match /comments/{commentId} {
         allow create: if createdByMe();
-        allow delete: if isUser(resource.data.userId);
+        allow delete: if isUser(resource.data.userId) || isAdmin();
       }
     }
 
@@ -60,10 +107,11 @@ service cloud.firestore {
       allow read: if true;
     }
 
-    // Help chat: one private thread per customer. Shop replies are added by the shop team.
+    // Help chat: one private thread per customer. The shop team can read and reply.
     match /chats/{uid}/messages/{messageId} {
-      allow read: if isUser(uid);
-      allow create: if isUser(uid) && request.resource.data.from in ['me', 'bot'];
+      allow read: if isUser(uid) || isAdmin();
+      allow create: if (isUser(uid) && request.resource.data.from in ['me', 'bot'])
+        || (isAdmin() && request.resource.data.from == 'shop');
     }
   }
 }

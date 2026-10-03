@@ -33,9 +33,13 @@ Every screen from the designs works end to end:
 - Help chat with quick answers, WhatsApp, call and map links
 - Sign in with Google
 - After an order or request, the customer can send its details to the shop on WhatsApp
+- **Shop admin** (Me → Shop admin, for the owner and admins): add and edit products with up to 5 photos,
+  show or hide them, move orders and private requests through their steps, WhatsApp customers, and
+  (owner only) add or remove admins
 
-In test and store builds, sign-in, orders, requests, reviews and chat use Firebase. In Expo Go and the
-browser they are simulated on the device (demo mode). Online payment is not connected yet.
+In test and store builds, products, sign-in, orders, requests, reviews and chat use Firebase. In Expo Go
+and the browser they are simulated on the device (demo mode, where whoever signs in is the owner, so
+Shop admin can be tried). Online payment is not connected yet.
 
 ## Fill in before launch
 
@@ -47,8 +51,8 @@ All in [src/constants/shop.ts](src/constants/shop.ts):
 Home delivery from the shop covers Khanda Colony and New Panvel (`localAreas` in the same file).
 Their pincode, 410206, also covers the rest of Panvel, so the bag asks local customers which area they are in.
 
-Products, prices and descriptions in [src/data/catalogue.ts](src/data/catalogue.ts) are samples.
-Product photos replace the striped placeholders once a `photo` URL is set.
+Real products are added in the app under Shop admin. The products in [src/data/catalogue.ts](src/data/catalogue.ts)
+are samples used only in demo mode.
 
 ## Firebase
 
@@ -63,10 +67,21 @@ The code is in [src/backend/firebase.ts](src/backend/firebase.ts); screens reach
   Firebase console, or with `npx firebase-tools deploy --only firestore:rules,storage`.
 - Google sign-in needs each build's SHA-1 fingerprint added in Firebase (Project settings → Your apps),
   followed by a fresh `google-services.json`.
-- Phone OTP sign-in and review photos are built but switched off (`Features` in
-  [src/constants/shop.ts](src/constants/shop.ts)), because they need Firebase's pay-as-you-go Blaze plan.
-- Until the shop has its own tools, update order and request status, review replies and chat replies
-  in the Firebase console (Firestore Database).
+- Photos (products and reviews) use Cloud Storage, which needs the pay-as-you-go Blaze plan. Create the
+  bucket in `us-central1`, where 5 GB of storage and 100 GB of downloads a month are free.
+- Phone OTP sign-in is built but switched off (`Features` in [src/constants/shop.ts](src/constants/shop.ts))
+  because each text costs money.
+- Help chat and review replies are answered in the Firebase console (Firestore Database) for now.
+
+### Shop team
+
+The team lives in the Firestore collection `staff`, one document per Google email address:
+
+- **owner**: set up once by hand. In Firestore, create collection `staff`, document ID = the owner's
+  Gmail address, with fields `name` (string), `role` (string) `owner` and `active` (boolean) `true`.
+- **admin**: added by the owner in the app (Shop admin → Team).
+- **seller**: reserved for a future open marketplace. Products already record who listed them
+  (`sellerId`) and the rules let a seller manage only their own products, but the app does not offer it yet.
 
 ### Test build on an Android phone
 
@@ -90,6 +105,7 @@ src/app/            Screens (Expo Router: each file is a route)
   bag.tsx           Bag and checkout
   orders.tsx        Orders & requests tracking
   sign-in.tsx       Sign-in sheet opened when a guest needs an account
+  admin/            Shop admin: products, orders, private requests, team
 src/backend/        Firebase sign-in, Firestore and Storage
 src/components/     Shared UI: text, icons, buttons, tab bar, animations
 src/constants/      Design tokens (theme.ts) and shop details (shop.ts)
@@ -99,6 +115,7 @@ src/store/          App state used by every screen
 
 ## Next steps
 
-1. **Shop admin**: screens for the shop team to add products and photos, update order status and reply to chat and reviews.
+1. **Replies in the app**: answer help chat and reviews from Shop admin.
 2. **Payments**: Razorpay for UPI and cards.
 3. **Store release**: production builds with EAS, then Play Store and App Store listings.
+4. **Open marketplace (later)**: let makers apply to sell, owner approval, seller pages and payouts.

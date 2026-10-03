@@ -31,7 +31,7 @@ export const Features = {
   // Phone OTP sign-in: texts cost about ₹6 each after the first 10 a day.
   phoneSignIn: false,
   // Photos on reviews: uploads use Cloud Storage.
-  reviewPhotos: false,
+  reviewPhotos: true,
 } as const;
 
 export const localAreasLabel = Shop.localAreas.join(' & ');

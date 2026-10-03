@@ -14,7 +14,7 @@ export function ProductCard({ product }: { product: Product }) {
       accessibilityLabel={`${product.name}, ${formatPrice(product.price)}`}
       onPress={() => router.push({ pathname: '/product/[id]', params: { id: product.id } })}
       style={styles.card}>
-      <ProductPhoto photo={product.photo} pattern={product.pattern} label={product.photo ? undefined : '[Product photo]'} style={styles.photo} />
+      <ProductPhoto photo={product.photos?.[0]} pattern={product.pattern} style={styles.photo} />
       <Txt weight="semibold" size={14} numberOfLines={2}>
         {product.name}
       </Txt>

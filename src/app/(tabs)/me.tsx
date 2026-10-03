@@ -15,7 +15,6 @@ import { Txt } from '@/components/txt';
 import { TextLink } from '@/components/ui';
 import { formatPrice } from '@/constants/shop';
 import { Colors } from '@/constants/theme';
-import { Products } from '@/data/catalogue';
 import { initial } from '@/lib/format';
 import { useShop } from '@/store/shop-store';
 
@@ -42,9 +41,9 @@ export default function MeScreen() {
   const insets = useSafeAreaInsets();
   const tabSpace = useTabBarSpace();
   const focused = useIsFocused();
-  const { demo, user, signOut, orders, requests, myReviews, address, wishlist } = useShop();
+  const { demo, user, isAdmin, signOut, orders, requests, myReviews, address, wishlist, products } = useShop();
 
-  const saved = Products.filter((p) => wishlist.includes(p.id));
+  const saved = products.filter((p) => wishlist.includes(p.id));
 
   return (
     <KeyboardAvoidingView style={styles.screen} behavior="padding">
@@ -72,6 +71,15 @@ export default function MeScreen() {
             </Animated.View>
 
             <Animated.View entering={rise(2)} style={styles.rows}>
+              {isAdmin ? (
+                <Tap onPress={() => router.push('/admin')} style={[styles.row, styles.adminRow]}>
+                  <Icon name="shop" size={22} color={Colors.white} />
+                  <Txt weight="bold" color={Colors.white} style={{ flex: 1 }}>
+                    Shop admin
+                  </Txt>
+                  <Icon name="chevron" size={18} color={Colors.white} />
+                </Tap>
+              ) : null}
               <Row
                 label="My orders & requests"
                 value={<Txt color={Colors.muted}>{orders.length + requests.length || ''}</Txt>}
@@ -104,7 +112,7 @@ export default function MeScreen() {
                       key={p.id}
                       onPress={() => router.push({ pathname: '/product/[id]', params: { id: p.id } })}
                       style={{ width: 132, gap: 6 }}>
-                      <ProductPhoto photo={p.photo} pattern={p.pattern} style={{ height: 110, borderRadius: 16 }} />
+                      <ProductPhoto photo={p.photos?.[0]} pattern={p.pattern} style={{ height: 110, borderRadius: 16 }} />
                       <Txt weight="semibold" size={13} numberOfLines={1}>
                         {p.name}
                       </Txt>
@@ -152,4 +160,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     minHeight: 52,
   },
+  adminRow: { backgroundColor: Colors.ink },
 });

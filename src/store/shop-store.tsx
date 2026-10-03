@@ -1,6 +1,7 @@
 // App state. Screens only talk to `useShop()`.
-// In development and store builds, sign-in, orders, requests, reviews and chat go through Firebase
-// (src/backend/firebase.ts). In Expo Go and the web preview they stay on the device (demo mode).
+// In development and store builds, products, sign-in, orders, requests, reviews and chat go through
+// Firebase (src/backend/firebase.ts). In Expo Go and the web preview they stay on the device (demo mode,
+// where the signed-in demo user is the shop owner so the admin screens can be tried).
 // The bag, wishlist, pincode and address are always kept on the device.
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -9,7 +10,7 @@ import { createContext, use, useEffect, useRef, useState, type ReactNode } from 
 import * as live from '@/backend/firebase';
 import type { AuthResult } from '@/backend/firebase';
 import { Shop, isLocalDelivery } from '@/constants/shop';
-import { getProduct } from '@/data/catalogue';
+import { SampleProducts, type Product } from '@/data/catalogue';
 import { notify } from '@/lib/links';
 
 import type {
@@ -17,12 +18,16 @@ import type {
   BagItem,
   ChatMessage,
   Order,
+  OrderStatus,
   PaymentMethod,
   PrivateRequest,
   ReceiveMode,
   RequestCategory,
+  RequestStatus,
   Review,
   ReviewComment,
+  Role,
+  StaffMember,
   User,
 } from './types';
 
@@ -36,6 +41,8 @@ type State = {
   requests: PrivateRequest[];
   reviews: Review[];
   chat: ChatMessage[];
+  products: Product[] | null; // null until a demo admin edits the sample catalogue
+  staff: StaffMember[];
   // Always on the device.
   bag: BagItem[];
   wishlist: string[];
@@ -49,6 +56,8 @@ const initialState: State = {
   requests: [],
   reviews: [],
   chat: [],
+  products: null,
+  staff: [],
   bag: [],
   wishlist: [],
   pincode: '',
@@ -57,6 +66,11 @@ const initialState: State = {
 
 // The signed-in customer's own data from Firebase, tagged with whose it is.
 type Mine = { uid: string; orders: Order[]; requests: PrivateRequest[]; chat: ChatMessage[] };
+
+// Everything shop admins manage, loaded only for admins.
+type AdminData = { products: Product[]; orders: Order[]; requests: PrivateRequest[]; staff: StaffMember[] };
+
+const isShown = (p: Product) => (p.status ?? 'active') === 'active';
 
 // Instant answers in the help chat. Shop replies arrive separately.
 export const QuickAnswers: Record<string, string> = {
@@ -104,6 +118,9 @@ function useShopState() {
   const [authReady, setAuthReady] = useState(demo);
   const [mine, setMine] = useState<Mine | null>(null);
   const [liveReviews, setLiveReviews] = useState<Review[]>([]);
+  const [liveProducts, setLiveProducts] = useState<Product[] | null>(null);
+  const [liveRole, setLiveRole] = useState<{ email: string; role: Role | null } | null>(null);
+  const [liveAdmin, setLiveAdmin] = useState<AdminData>({ products: [], orders: [], requests: [], staff: [] });
 
   useEffect(() => {
     AsyncStorage.getItem(STORAGE_KEY)
@@ -128,14 +145,38 @@ function useShopState() {
       setAuthReady(true);
     });
     const stopReviews = live.watchReviews(setLiveReviews);
+    const stopProducts = live.watchProducts(false, setLiveProducts);
     return () => {
       stopAuth();
       stopReviews();
+      stopProducts();
     };
   }, []);
 
   const user = demo ? state.user : liveUser;
   const userId = user?.id;
+  const email = demo ? undefined : user?.email;
+
+  useEffect(() => {
+    if (demo || !email) return;
+    return live.watchMyRole(email, (role) => setLiveRole({ email, role }));
+  }, [email]);
+
+  // Demo mode: whoever signs in is the owner, so the admin screens can be tried.
+  const role: Role | null = demo ? (user ? 'owner' : null) : liveRole?.email === email ? (liveRole?.role ?? null) : null;
+  const isAdmin = role === 'owner' || role === 'admin';
+
+  useEffect(() => {
+    if (demo || !isAdmin) return;
+    const patch = (part: Partial<AdminData>) => setLiveAdmin((a) => ({ ...a, ...part }));
+    const stops = [
+      live.watchProducts(true, (products) => patch({ products })),
+      live.watchAllOrders((orders) => patch({ orders })),
+      live.watchAllRequests((requests) => patch({ requests })),
+      live.watchStaff((staff) => patch({ staff })),
+    ];
+    return () => stops.forEach((stop) => stop());
+  }, [isAdmin]);
 
   useEffect(() => {
     if (demo || !userId) return;
@@ -157,8 +198,15 @@ function useShopState() {
   // Guests' quick answers stay on the device; signed-in chats are saved to Firebase.
   const chat = !demo && user ? (own?.chat ?? []) : state.chat;
 
+  const demoProducts = state.products ?? SampleProducts;
+  // What shoppers see, plus everything (including hidden pieces) for admins.
+  const products = demo ? demoProducts.filter(isShown) : (liveProducts ?? []);
+  const adminProducts = demo ? demoProducts : liveAdmin.products;
+  const productById = (id: string | undefined) =>
+    products.find((p) => p.id === id) ?? (isAdmin ? adminProducts.find((p) => p.id === id) : undefined);
+
   const bagLines = state.bag.flatMap((item) => {
-    const product = getProduct(item.productId);
+    const product = productById(item.productId);
     return product ? [{ ...item, product }] : [];
   });
   const subtotal = bagLines.reduce((sum, l) => sum + l.product.price * l.qty, 0);
@@ -168,11 +216,26 @@ function useShopState() {
     else update((s) => ({ chat: [...s.chat, message] }));
   };
 
+  const demoOwner: StaffMember = {
+    email: user?.email ?? 'owner@demo',
+    name: user?.name ?? 'Owner',
+    role: 'owner',
+    active: true,
+    addedAt: 0,
+  };
+
   return {
     ready: hydrated && authReady,
     demo,
     user,
+    role,
+    isAdmin,
     pincode: state.pincode,
+
+    // Catalogue
+    products,
+    productsReady: demo || liveProducts !== null,
+    productById,
     address: state.address,
 
     // Account
@@ -345,6 +408,60 @@ function useShopState() {
           return { ...r, helpfulBy: helpful ? [...others, user.id] : others };
         }),
       }));
+    },
+
+    // Shop admin tools (owner and admins). Firestore rules enforce the same limits.
+    admin: {
+      products: adminProducts,
+      orders: demo ? state.orders : liveAdmin.orders,
+      requests: demo ? state.requests : liveAdmin.requests,
+      staff: demo ? [demoOwner, ...state.staff] : liveAdmin.staff,
+      newProductId: () => makeId('PR'),
+      async saveProduct(input: Omit<Product, 'sellerId' | 'sellerName' | 'createdAt' | 'updatedAt'>) {
+        if (!user || !isAdmin) throw new Error('Only shop admins can edit products.');
+        const existing = adminProducts.find((p) => p.id === input.id);
+        const product: Product = {
+          ...input,
+          sellerId: existing?.sellerId ?? user.id,
+          sellerName: existing?.sellerName ?? user.name,
+          createdAt: existing?.createdAt ?? Date.now(),
+          updatedAt: Date.now(),
+        };
+        if (!demo) return live.saveProduct(product);
+        update((s) => {
+          const list = s.products ?? SampleProducts;
+          return {
+            products: existing ? list.map((p) => (p.id === product.id ? product : p)) : [product, ...list],
+          };
+        });
+      },
+      async deleteProduct(id: string) {
+        if (!demo) return live.deleteProduct(id);
+        update((s) => ({ products: (s.products ?? SampleProducts).filter((p) => p.id !== id) }));
+      },
+      setOrderStatus(id: string, status: OrderStatus) {
+        if (!demo) {
+          live.setOrderStatus(id, status).catch(() => notify('Status not saved', offline));
+          return;
+        }
+        update((s) => ({ orders: s.orders.map((o) => (o.id === id ? { ...o, status } : o)) }));
+      },
+      setRequestStatus(id: string, status: RequestStatus) {
+        if (!demo) {
+          live.setRequestStatus(id, status).catch(() => notify('Status not saved', offline));
+          return;
+        }
+        update((s) => ({ requests: s.requests.map((r) => (r.id === id ? { ...r, status } : r)) }));
+      },
+      async addStaff(member: Pick<StaffMember, 'email' | 'name' | 'role'>) {
+        const entry: StaffMember = { ...member, email: member.email.trim().toLowerCase(), active: true, addedAt: Date.now() };
+        if (!demo) return live.saveStaff(entry);
+        update((s) => ({ staff: [...s.staff.filter((m) => m.email !== entry.email), entry] }));
+      },
+      async removeStaff(email: string) {
+        if (!demo) return live.removeStaff(email);
+        update((s) => ({ staff: s.staff.filter((m) => m.email !== email) }));
+      },
     },
 
     // Help chat

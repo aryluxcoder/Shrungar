@@ -125,7 +125,7 @@ export default function BagScreen() {
               <Tap
                 accessibilityLabel={line.product.name}
                 onPress={() => router.push({ pathname: '/product/[id]', params: { id: line.productId } })}>
-                <ProductPhoto photo={line.product.photo} pattern={{ ...line.product.pattern, stripe: 8 }} style={styles.thumb} />
+                <ProductPhoto photo={line.product.photos?.[0]} pattern={{ ...line.product.pattern, stripe: 8 }} style={styles.thumb} />
               </Tap>
               <View style={{ flex: 1, gap: 4 }}>
                 <Txt weight="bold" size={14} numberOfLines={2}>

@@ -12,7 +12,8 @@ import { useTabBarSpace } from '@/components/tab-bar';
 import { Tap } from '@/components/tap';
 import { Txt } from '@/components/txt';
 import { Colors, Fonts, Shadows } from '@/constants/theme';
-import { Categories, Products, type CategoryId } from '@/data/catalogue';
+import { Categories, type CategoryId } from '@/data/catalogue';
+import { useShop } from '@/store/shop-store';
 
 type Filter = CategoryId | 'all';
 
@@ -33,8 +34,9 @@ export default function ShopScreen() {
     setQuery(params.q ?? '');
   }
 
+  const { products, productsReady } = useShop();
   const q = query.trim().toLowerCase();
-  const results = Products.filter(
+  const results = products.filter(
     (p) =>
       (filter === 'all' || p.category === filter) &&
       (!q || p.name.toLowerCase().includes(q) || p.tags.some((t) => t.toLowerCase().includes(q))),
@@ -109,11 +111,15 @@ export default function ShopScreen() {
       ) : (
         <View style={styles.empty}>
           <Txt display size={20}>
-            Nothing found
+            {!productsReady ? 'Loading…' : products.length ? 'Nothing found' : 'New pieces coming soon'}
           </Txt>
-          <Txt size={14} color={Colors.muted} style={{ textAlign: 'center' }}>
-            Try another word, or ask us on WhatsApp. We make custom pieces too.
-          </Txt>
+          {productsReady ? (
+            <Txt size={14} color={Colors.muted} style={{ textAlign: 'center' }}>
+              {products.length
+                ? 'Try another word, or ask us on WhatsApp. We make custom pieces too.'
+                : 'Our handmade collection is being added. Ask us on WhatsApp for what is in the shop today.'}
+            </Txt>
+          ) : null}
         </View>
       )}
 

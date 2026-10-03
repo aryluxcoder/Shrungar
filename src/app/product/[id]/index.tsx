@@ -6,20 +6,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, Stars } from '@/components/icons';
 import { pop, rise } from '@/components/motion';
-import { ProductPhoto } from '@/components/product-photo';
+import { PhotoGallery } from '@/components/product-photo';
 import { Tap } from '@/components/tap';
 import { Txt } from '@/components/txt';
 import { BackButton, Button } from '@/components/ui';
 import { Shop, formatPrice } from '@/constants/shop';
 import { Colors } from '@/constants/theme';
-import { getProduct } from '@/data/catalogue';
 import { useShop } from '@/store/shop-store';
 
 export default function ProductScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const product = getProduct(id);
   const insets = useSafeAreaInsets();
-  const { addToBag, wishlist, toggleWishlist, reviewsFor } = useShop();
+  const { addToBag, wishlist, toggleWishlist, reviewsFor, productById, productsReady } = useShop();
+  const product = productById(id);
 
   const [colour, setColour] = useState(0);
   const [size, setSize] = useState<string | null>(null);
@@ -31,10 +30,18 @@ export default function ProductScreen() {
     return (
       <View style={[styles.missing, { paddingTop: insets.top + 20 }]}>
         <BackButton />
-        <Txt display size={24}>
-          This piece is no longer available
-        </Txt>
-        <Button label="Browse the shop" onPress={() => router.navigate('/shop')} />
+        {productsReady ? (
+          <>
+            <Txt display size={24}>
+              This piece is no longer available
+            </Txt>
+            <Button label="Browse the shop" onPress={() => router.navigate('/shop')} />
+          </>
+        ) : (
+          <Txt size={15} color={Colors.muted}>
+            Loading…
+          </Txt>
+        )}
       </View>
     );
   }
@@ -52,7 +59,7 @@ export default function ProductScreen() {
   };
 
   const add = () => {
-    if (product.sizes && !size) {
+    if (product.sizes?.length && !size) {
       setNeedSize(true);
       return;
     }
@@ -64,12 +71,7 @@ export default function ProductScreen() {
     <View style={styles.screen}>
       <ScrollView contentContainerStyle={{ paddingBottom: 24 }}>
         <Animated.View entering={FadeIn.duration(900)}>
-          <ProductPhoto
-            photo={product.photo}
-            pattern={product.pattern}
-            style={{ height: 400 + insets.top }}
-            label={product.photo ? undefined : '[Product photo · swipe for more]'}
-          />
+          <PhotoGallery photos={product.photos ?? []} pattern={product.pattern} height={400 + insets.top} />
         </Animated.View>
 
         <View style={styles.sheet}>
@@ -98,7 +100,7 @@ export default function ProductScreen() {
             </View>
           </Animated.View>
 
-          {product.colours ? (
+          {product.colours?.length ? (
             <Animated.View entering={rise(2)} style={{ gap: 10 }}>
               <Txt weight="bold" size={14}>
                 Colour ·{' '}
@@ -124,7 +126,7 @@ export default function ProductScreen() {
             </Animated.View>
           ) : null}
 
-          {product.sizes ? (
+          {product.sizes?.length ? (
             <Animated.View entering={rise(2)} style={{ gap: 10 }}>
               <Txt weight="bold" size={14}>
                 Size{' '}

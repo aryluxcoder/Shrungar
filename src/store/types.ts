@@ -1,3 +1,15 @@
+// Shop team, stored by email in Firestore `staff`. The owner is added in the Firebase console;
+// 'seller' is reserved for a future open marketplace and is not offered in the app yet.
+export type Role = 'owner' | 'admin' | 'seller';
+
+export type StaffMember = {
+  email: string;
+  name: string;
+  role: Role;
+  active: boolean;
+  addedAt: number;
+};
+
 export type User = {
   id: string;
   name: string;

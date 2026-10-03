@@ -1,15 +1,31 @@
 rules_version = '2';
 
-// Review photos: anyone can view them, customers upload only into their own folder (images up to 5 MB).
+// Photos: anyone can view them. Images only, up to 5 MB.
 // Publish: Firebase console → Storage → Rules, or `npx firebase-tools deploy --only storage`.
+// Product photos check the shop team list in Firestore (`staff/{email}`); the console asks once
+// for permission to let Storage rules read Firestore.
 service firebase.storage {
   match /b/{bucket}/o {
+    function isImage() {
+      return request.resource.size < 5 * 1024 * 1024 && request.resource.contentType.matches('image/.*');
+    }
+    function isShopTeam() {
+      return request.auth != null
+        && request.auth.token.email_verified == true
+        && firestore.exists(/databases/(default)/documents/staff/$(request.auth.token.email))
+        && firestore.get(/databases/(default)/documents/staff/$(request.auth.token.email)).data.active == true;
+    }
+
+    // Review photos: customers upload only into their own folder.
     match /reviews/{uid}/{file} {
       allow read: if true;
-      allow write: if request.auth != null
-        && request.auth.uid == uid
-        && request.resource.size < 5 * 1024 * 1024
-        && request.resource.contentType.matches('image/.*');
+      allow write: if request.auth != null && request.auth.uid == uid && isImage();
+    }
+
+    // Product photos: the shop team (and future sellers) upload them.
+    match /products/{productId}/{file} {
+      allow read: if true;
+      allow write: if isShopTeam() && isImage();
     }
   }
 }
