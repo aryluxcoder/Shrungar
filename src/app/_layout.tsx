@@ -42,8 +42,8 @@ export default function RootLayout() {
 }
 
 function App({ fontsReady }: { fontsReady: boolean }) {
-  const { hydrated } = useShop();
-  const ready = fontsReady && hydrated;
+  const shop = useShop();
+  const ready = fontsReady && shop.ready;
 
   useEffect(() => {
     if (ready) SplashScreen.hideAsync();

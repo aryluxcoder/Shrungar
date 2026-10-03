@@ -68,6 +68,7 @@ export type PrivateRequest = {
 
 export type ReviewComment = {
   id: string;
+  userId: string;
   userName: string;
   text: string;
   createdAt: number;
@@ -84,12 +85,15 @@ export type Review = {
   verified: boolean;
   createdAt: number;
   reply?: string;
+  // Users who marked the review helpful.
+  helpfulBy: string[];
   comments: ReviewComment[];
 };
 
 export type ChatMessage = {
   id: string;
-  from: 'me' | 'shop';
+  // 'bot' is an instant quick answer, 'shop' a reply from the shop team.
+  from: 'me' | 'shop' | 'bot';
   text: string;
   createdAt: number;
 };

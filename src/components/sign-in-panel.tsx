@@ -27,32 +27,37 @@ export function BrandHeader({ topInset, height = 330 }: { topInset: number; heig
   );
 }
 
-// Google or phone OTP sign-in. Demo build: no real Google or SMS calls are made yet.
-export function SignInPanel({ onDone, onSkip, skipLabel }: { onDone?: () => void; onSkip: () => void; skipLabel: string }) {
-  const { signInWithGoogle, sendOtp, verifyOtp } = useShop();
+// Google or phone OTP sign-in. Screens react to the signed-in user, so this only reports errors.
+// In demo mode (Expo Go / web) no real Google or SMS calls are made.
+export function SignInPanel({ onSkip, skipLabel }: { onSkip: () => void; skipLabel: string }) {
+  const { demo, signInWithGoogle, sendOtp, verifyOtp } = useShop();
   const [phone, setPhone] = useState('');
   const [step, setStep] = useState<'start' | 'otp'>('start');
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [error, setError] = useState('');
+  const [busy, setBusy] = useState<'google' | 'otp' | 'verify' | null>(null);
 
   const digits = phone.replace(/\D/g, '');
 
-  const google = () => {
-    signInWithGoogle();
-    onDone?.();
+  const run = async (task: 'google' | 'otp' | 'verify', action: () => Promise<{ ok: boolean; message?: string }>) => {
+    setBusy(task);
+    setError('');
+    const result = await action();
+    setBusy(null);
+    if (!result.ok && result.message) setError(result.message);
+    return result.ok;
   };
+
+  const google = () => run('google', signInWithGoogle);
 
   const requestOtp = async () => {
-    if (!(await sendOtp(digits))) return setError('Enter your 10-digit mobile number');
-    setError('');
-    setStep('otp');
+    if (await run('otp', () => sendOtp(digits))) setStep('otp');
   };
 
-  const verify = async () => {
+  const verify = () => {
     if (!name.trim()) return setError('Tell us your name');
-    if (!(await verifyOtp(digits, code, name))) return setError('Enter the 6-digit code');
-    onDone?.();
+    run('verify', () => verifyOtp(digits, code, name));
   };
 
   if (step === 'otp') {
@@ -88,10 +93,17 @@ export function SignInPanel({ onDone, onSkip, skipLabel }: { onDone?: () => void
               {error}
             </Txt>
           ) : null}
-          <Button label="Verify & continue" tone="dark" onPress={verify} />
-          <Txt size={12} color={Colors.faint} style={{ textAlign: 'center' }}>
-            Demo mode: any 6 digits will work.
-          </Txt>
+          <Button
+            label={busy === 'verify' ? 'Checking…' : 'Verify & continue'}
+            tone="dark"
+            disabled={!!busy}
+            onPress={verify}
+          />
+          {demo ? (
+            <Txt size={12} color={Colors.faint} style={{ textAlign: 'center' }}>
+              Demo mode: any 6 digits will work.
+            </Txt>
+          ) : null}
           <TextLink label="Change number" onPress={() => setStep('start')} />
         </Animated.View>
       </View>
@@ -110,7 +122,15 @@ export function SignInPanel({ onDone, onSkip, skipLabel }: { onDone?: () => void
       </Animated.View>
 
       <Animated.View entering={rise(3)}>
-        <Button label="Continue with Google" tone="outline" height={56} icon={<GoogleLogo />} onPress={google} style={{ boxShadow: Shadows.card }} />
+        <Button
+          label={busy === 'google' ? 'Signing in…' : 'Continue with Google'}
+          tone="outline"
+          height={56}
+          icon={<GoogleLogo />}
+          disabled={!!busy}
+          onPress={google}
+          style={{ boxShadow: Shadows.card }}
+        />
       </Animated.View>
 
       <Animated.View entering={rise(4)} style={styles.divider}>
@@ -146,7 +166,7 @@ export function SignInPanel({ onDone, onSkip, skipLabel }: { onDone?: () => void
         </Txt>
       ) : null}
       <Animated.View entering={rise(5)}>
-        <Button label="Send OTP" tone="dark" onPress={requestOtp} />
+        <Button label={busy === 'otp' ? 'Sending…' : 'Send OTP'} tone="dark" disabled={!!busy} onPress={requestOtp} />
       </Animated.View>
 
       <Animated.View entering={rise(5)}>

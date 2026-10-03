@@ -42,7 +42,7 @@ export default function MeScreen() {
   const insets = useSafeAreaInsets();
   const tabSpace = useTabBarSpace();
   const focused = useIsFocused();
-  const { user, signOut, orders, requests, myReviews, address, wishlist } = useShop();
+  const { demo, user, signOut, orders, requests, myReviews, address, wishlist } = useShop();
 
   const saved = Products.filter((p) => wishlist.includes(p.id));
 
@@ -66,7 +66,8 @@ export default function MeScreen() {
                 Hello, {user.name}
               </Txt>
               <Txt size={13} color={Colors.muted}>
-                {user.provider === 'google' ? 'Signed in with Google' : `Signed in with ${user.phone}`} · demo mode
+                Signed in with {user.provider === 'google' ? (user.email ?? 'Google') : user.phone}
+                {demo ? ' · demo mode' : ''}
               </Txt>
             </Animated.View>
 

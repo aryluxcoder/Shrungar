@@ -13,6 +13,7 @@ import { Txt } from '@/components/txt';
 import { Button, Field, Label, TextLink } from '@/components/ui';
 import { Shop, localAreasLabel } from '@/constants/shop';
 import { Colors, Fonts } from '@/constants/theme';
+import { openWhatsApp } from '@/lib/links';
 import { useShop } from '@/store/shop-store';
 import type { ReceiveMode, RequestCategory } from '@/store/types';
 
@@ -37,15 +38,22 @@ export default function RequestScreen() {
   const [whatsapp, setWhatsapp] = useState(user?.phone?.replace(/^\+91/, '') ?? '');
   const [error, setError] = useState('');
   const [sentSummary, setSentSummary] = useState('');
+  const [sentMessage, setSentMessage] = useState('');
 
   const submit = () => {
     const digits = whatsapp.replace(/\D/g, '').replace(/^91(?=\d{10}$)/, '');
     if (mode === 'local' && !area) return setError('Choose your area for home delivery');
     if (digits.length !== 10) return setError('Enter your 10-digit WhatsApp number');
     if (!user) return router.push('/sign-in');
-    sendRequest({ category, size, notes: notes.trim(), mode, area: mode === 'local' ? area : undefined, whatsapp: digits });
+    const delivery = mode === 'local' ? area : undefined;
+    const id = sendRequest({ category, size, notes: notes.trim(), mode, area: delivery, whatsapp: digits });
     setError('');
     setSentSummary(`${category.toLowerCase()} in size ${size}`);
+    setSentMessage(
+      `Hi Shrungar, I sent a private request ${id} in the app: ${category}, size ${size}, ` +
+        (delivery ? `home delivery in ${delivery}.` : 'pickup at the shop.') +
+        (notes.trim() ? `\n${notes.trim()}` : ''),
+    );
   };
 
   const reset = () => {
@@ -98,8 +106,14 @@ export default function RequestScreen() {
                   price for your {sentSummary}.
                 </Txt>
               </Animated.View>
-              <Animated.View entering={rise(3)} style={{ alignSelf: 'stretch', gap: 4, marginTop: 8 }}>
+              <Animated.View entering={rise(3)} style={{ alignSelf: 'stretch', gap: 10, marginTop: 8 }}>
                 <Button label="Track my request" tone="dark" height={52} onPress={() => router.push('/orders')} />
+                <Tap onPress={() => openWhatsApp(sentMessage)} style={styles.sendWhatsapp}>
+                  <Icon name="whatsapp" size={18} color={Colors.white} />
+                  <Txt weight="bold" size={15} color={Colors.white}>
+                    Send details on WhatsApp
+                  </Txt>
+                </Tap>
                 <TextLink label="Make another request" onPress={reset} />
               </Animated.View>
             </View>
@@ -302,6 +316,15 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
   },
   radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  sendWhatsapp: {
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: Colors.whatsapp,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
   areas: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   area: {
     height: 44,

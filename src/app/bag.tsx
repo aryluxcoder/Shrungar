@@ -44,7 +44,7 @@ const addressFields: { key: Exclude<keyof Address, 'pincode' | 'area'>; placehol
 
 export default function BagScreen() {
   const insets = useSafeAreaInsets();
-  const { user, bag, subtotal, setQty, pincode: savedPin, setPincode, address: savedAddress, placeOrder } = useShop();
+  const { demo, user, bag, subtotal, setQty, pincode: savedPin, setPincode, address: savedAddress, placeOrder } = useShop();
 
   const [pin, setPin] = useState(savedPin);
   const [checkedPin, setCheckedPin] = useState(savedPin);
@@ -261,7 +261,7 @@ export default function BagScreen() {
             })}
           </View>
           <Txt size={12} color={Colors.faint}>
-            Demo build: no payment is taken yet.
+            {demo ? 'Demo build: no payment is taken yet.' : 'Online payment is coming soon. No money is taken in the app yet.'}
           </Txt>
         </Animated.View>
 

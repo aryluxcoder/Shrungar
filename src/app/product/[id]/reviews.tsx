@@ -38,10 +38,11 @@ function Bar({ star, share }: { star: number; share: number }) {
 }
 
 function ReviewCard({ review, index }: { review: Review; index: number }) {
-  const { user, helpful, toggleHelpful, addComment } = useShop();
+  const { user, toggleHelpful, addComment } = useShop();
   const [open, setOpen] = useState(false);
   const [comment, setComment] = useState('');
-  const liked = helpful.includes(review.id);
+  const liked = !!user && review.helpfulBy.includes(user.id);
+  const helpfulCount = review.helpfulBy.length;
 
   const send = () => {
     if (!user) return router.push('/sign-in');
@@ -92,10 +93,10 @@ function ReviewCard({ review, index }: { review: Review; index: number }) {
       <View style={{ flexDirection: 'row', gap: 6 }}>
         <Tap
           accessibilityState={{ selected: liked }}
-          onPress={() => toggleHelpful(review.id)}
+          onPress={() => (user ? toggleHelpful(review.id) : router.push('/sign-in'))}
           style={[styles.pill, liked && { backgroundColor: Colors.blush }]}>
           <Txt weight="semibold" size={13} color={liked ? Colors.accentDeep : Colors.body}>
-            ♥ Helpful{liked ? ' · 1' : ''}
+            ♥ Helpful{helpfulCount ? ` · ${helpfulCount}` : ''}
           </Txt>
         </Tap>
         <Tap onPress={() => setOpen(!open)} style={styles.pill}>

@@ -1,0 +1,15 @@
+rules_version = '2';
+
+// Review photos: anyone can view them, customers upload only into their own folder (images up to 5 MB).
+// Publish: Firebase console → Storage → Rules, or `npx firebase-tools deploy --only storage`.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /reviews/{uid}/{file} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+    }
+  }
+}

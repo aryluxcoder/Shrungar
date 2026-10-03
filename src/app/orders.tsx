@@ -18,6 +18,20 @@ import { OrderSteps, RequestSteps, type Order, type PrivateRequest } from '@/sto
 const orderLabels = ['Order placed', 'Packed by hand', 'Shipped', 'Delivered'];
 const requestLabels = ['Received', 'Shop checking', 'Confirmed', 'Pickup / delivery'];
 
+// Lets the customer alert the shop about a new order until the shop has its own order screen.
+function orderMessage(order: Order) {
+  const items = order.lines
+    .map((l) => `- ${l.name}${l.colour ? `, ${l.colour}` : ''}${l.size ? `, size ${l.size}` : ''} × ${l.qty}`)
+    .join('\n');
+  const a = order.address;
+  const where = [a.line1, a.line2, a.area, a.city, a.pincode].filter(Boolean).join(', ');
+  return (
+    `Hi Shrungar, I just placed order ${order.id} in the app.\n${items}\n` +
+    `Total: ${formatPrice(order.total)} (${order.payment === 'COD' ? 'cash on delivery' : order.payment})\n` +
+    `Deliver to: ${a.name}, ${where}`
+  );
+}
+
 function expectedBy(order: Order) {
   const maxDays = Number(Shop.shippingDays.split(/\D+/).pop()) || 8;
   return new Date(order.createdAt + maxDays * 86_400_000).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
@@ -165,17 +179,30 @@ export default function OrdersScreen() {
 
       {placed ? (
         <Animated.View entering={pop(1)} style={styles.placed}>
-          <View style={styles.placedIcon}>
-            <Icon name="check" size={20} color={Colors.white} />
+          <View style={styles.placedRow}>
+            <View style={styles.placedIcon}>
+              <Icon name="check" size={20} color={Colors.white} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Txt weight="bold" color={Colors.sage}>
+                Order placed
+              </Txt>
+              <Txt size={13} color={Colors.body}>
+                Thank you! We will pack it by hand and share updates here.
+              </Txt>
+            </View>
           </View>
-          <View style={{ flex: 1 }}>
-            <Txt weight="bold" color={Colors.sage}>
-              Order placed
+          <Tap
+            onPress={() => {
+              const order = orders.find((o) => o.id === placed);
+              openWhatsApp(order ? orderMessage(order) : `Hi Shrungar, I just placed order ${placed} in the app.`);
+            }}
+            style={styles.sendWhatsapp}>
+            <Icon name="whatsapp" size={18} color={Colors.white} />
+            <Txt weight="bold" size={14} color={Colors.white}>
+              Send order details on WhatsApp
             </Txt>
-            <Txt size={13} color={Colors.body}>
-              Thank you! We will pack it by hand and share updates here.
-            </Txt>
-          </View>
+          </Tap>
         </Animated.View>
       ) : null}
 
@@ -264,12 +291,20 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   placed: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 12,
     backgroundColor: Colors.sageSoft,
     borderRadius: 20,
     padding: 14,
+  },
+  placedRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  sendWhatsapp: {
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: Colors.whatsapp,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   placedIcon: {
     width: 36,
