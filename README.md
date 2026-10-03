@@ -56,7 +56,7 @@ are samples used only in demo mode.
 
 ## Firebase
 
-Firebase project `shrungar-f6de8`. App ID (Android package and iOS bundle ID): `app.shrungar.com`.
+Firebase project `shrungar-1958`. App ID (Android package and iOS bundle ID): `app.shrungar.com`.
 The code is in [src/backend/firebase.ts](src/backend/firebase.ts); screens reach it through
 [src/store/shop-store.tsx](src/store/shop-store.tsx).
 
