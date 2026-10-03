@@ -58,6 +58,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "8bc88889-e099-4bb6-8f6e-d8ee56438775"
+      }
+    },
+    "owner": "metachitect"
   }
 }
