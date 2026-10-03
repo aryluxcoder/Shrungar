@@ -11,6 +11,7 @@ import { pop, rise } from '@/components/motion';
 import { Tap } from '@/components/tap';
 import { Txt } from '@/components/txt';
 import { Button, Field, ScreenHeader } from '@/components/ui';
+import { Features } from '@/constants/shop';
 import { Colors } from '@/constants/theme';
 import { getProduct } from '@/data/catalogue';
 import { formatDate, initial } from '@/lib/format';
@@ -243,12 +244,14 @@ export default function ReviewsScreen() {
             </Txt>
           ) : null}
           <View style={{ flexDirection: 'row', gap: 10 }}>
-            <Tap onPress={pickPhoto} style={styles.addPhoto}>
-              <Icon name="camera" size={18} color={Colors.body} />
-              <Txt weight="semibold" size={14} color={Colors.body}>
-                {photo ? 'Change' : 'Add photo'}
-              </Txt>
-            </Tap>
+            {Features.reviewPhotos ? (
+              <Tap onPress={pickPhoto} style={styles.addPhoto}>
+                <Icon name="camera" size={18} color={Colors.body} />
+                <Txt weight="semibold" size={14} color={Colors.body}>
+                  {photo ? 'Change' : 'Add photo'}
+                </Txt>
+              </Tap>
+            ) : null}
             <Button label={user ? 'Post review' : 'Sign in to post'} height={46} style={{ flex: 1 }} onPress={post} />
           </View>
         </Animated.View>

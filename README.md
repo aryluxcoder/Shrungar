@@ -29,9 +29,9 @@ Every screen from the designs works end to end:
 - Bag with pincode check, local-delivery areas, delivery address, UPI/Card/COD choice
 - Orders & requests tracking with step-by-step progress
 - Private nightwear & lingerie requests
-- Reviews with ratings, photos, comments, "Helpful" counts and "Verified buyer" for people who ordered the piece
+- Reviews with ratings, comments, "Helpful" counts and "Verified buyer" for people who ordered the piece
 - Help chat with quick answers, WhatsApp, call and map links
-- Sign in with Google or phone OTP
+- Sign in with Google
 - After an order or request, the customer can send its details to the shop on WhatsApp
 
 In test and store builds, sign-in, orders, requests, reviews and chat use Firebase. In Expo Go and the
@@ -63,7 +63,8 @@ The code is in [src/backend/firebase.ts](src/backend/firebase.ts); screens reach
   Firebase console, or with `npx firebase-tools deploy --only firestore:rules,storage`.
 - Google sign-in needs each build's SHA-1 fingerprint added in Firebase (Project settings → Your apps),
   followed by a fresh `google-services.json`.
-- Phone OTP and review photo uploads need Firebase's pay-as-you-go Blaze plan.
+- Phone OTP sign-in and review photos are built but switched off (`Features` in
+  [src/constants/shop.ts](src/constants/shop.ts)), because they need Firebase's pay-as-you-go Blaze plan.
 - Until the shop has its own tools, update order and request status, review replies and chat replies
   in the Firebase console (Firestore Database).
 

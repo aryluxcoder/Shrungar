@@ -6,6 +6,7 @@ import { GoogleLogo } from '@/components/icons';
 import { Mandala, rise } from '@/components/motion';
 import { Txt } from '@/components/txt';
 import { Button, Field, TextLink } from '@/components/ui';
+import { Features } from '@/constants/shop';
 import { Colors, Fonts, Shadows } from '@/constants/theme';
 import { useShop } from '@/store/shop-store';
 
@@ -133,41 +134,46 @@ export function SignInPanel({ onSkip, skipLabel }: { onSkip: () => void; skipLab
         />
       </Animated.View>
 
-      <Animated.View entering={rise(4)} style={styles.divider}>
-        <View style={styles.rule} />
-        <Txt size={12} color={Colors.faint}>
-          or use your phone
-        </Txt>
-        <View style={styles.rule} />
-      </Animated.View>
+      {Features.phoneSignIn ? (
+        <>
+          <Animated.View entering={rise(4)} style={styles.divider}>
+            <View style={styles.rule} />
+            <Txt size={12} color={Colors.faint}>
+              or use your phone
+            </Txt>
+            <View style={styles.rule} />
+          </Animated.View>
 
-      <Animated.View entering={rise(4)} style={styles.phone}>
-        <Txt weight="bold" color={Colors.body}>
-          +91
-        </Txt>
-        <TextInput
-          value={phone}
-          onChangeText={(t) => {
-            setPhone(t);
-            setError('');
-          }}
-          keyboardType="phone-pad"
-          maxLength={10}
-          autoComplete="tel-national"
-          placeholder="Mobile number"
-          placeholderTextColor={Colors.faint}
-          accessibilityLabel="Mobile number"
-          style={styles.phoneInput}
-        />
-      </Animated.View>
+          <Animated.View entering={rise(4)} style={styles.phone}>
+            <Txt weight="bold" color={Colors.body}>
+              +91
+            </Txt>
+            <TextInput
+              value={phone}
+              onChangeText={(t) => {
+                setPhone(t);
+                setError('');
+              }}
+              keyboardType="phone-pad"
+              maxLength={10}
+              autoComplete="tel-national"
+              placeholder="Mobile number"
+              placeholderTextColor={Colors.faint}
+              accessibilityLabel="Mobile number"
+              style={styles.phoneInput}
+            />
+          </Animated.View>
+          <Animated.View entering={rise(5)}>
+            <Button label={busy === 'otp' ? 'Sending…' : 'Send OTP'} tone="dark" disabled={!!busy} onPress={requestOtp} />
+          </Animated.View>
+        </>
+      ) : null}
+
       {error ? (
-        <Txt weight="semibold" size={13} color={Colors.accent}>
+        <Txt weight="semibold" size={13} color={Colors.accent} style={{ textAlign: 'center' }}>
           {error}
         </Txt>
       ) : null}
-      <Animated.View entering={rise(5)}>
-        <Button label={busy === 'otp' ? 'Sending…' : 'Send OTP'} tone="dark" disabled={!!busy} onPress={requestOtp} />
-      </Animated.View>
 
       <Animated.View entering={rise(5)}>
         <TextLink label={skipLabel} onPress={onSkip} />

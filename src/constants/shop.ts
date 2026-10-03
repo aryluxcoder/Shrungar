@@ -26,6 +26,14 @@ export const Shop = {
   localDeliveryFee: 0,
 } as const;
 
+// Features that need Firebase's pay-as-you-go Blaze plan. Turn them on after upgrading.
+export const Features = {
+  // Phone OTP sign-in: texts cost about ₹6 each after the first 10 a day.
+  phoneSignIn: false,
+  // Photos on reviews: uploads use Cloud Storage.
+  reviewPhotos: false,
+} as const;
+
 export const localAreasLabel = Shop.localAreas.join(' & ');
 
 export function isLocalPincode(pin: string) {
